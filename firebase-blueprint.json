@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "users": {
+      "title": "Users",
+      "description": "User profiles",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "itineraries": {
+      "title": "Itineraries",
+      "description": "Travel itineraries created or saved by users",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "destination": { "type": "string" },
+        "dates": { "type": "string" },
+        "vibes": { "type": "array", "items": { "type": "string" } },
+        "totalStops": { "type": "number" },
+        "activeHours": { "type": "number" },
+        "region": { "type": "string" },
+        "days": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "isPublic": { "type": "boolean" }
+      },
+      "required": ["destination"]
+    }
+  },
+  "security": [
+    {
+      "entity": "users",
+      "read": "request.auth != null",
+      "write": "request.auth != null && request.auth.uid == userId"
+    },
+    {
+      "entity": "itineraries",
+      "read": "true",
+      "write": "request.auth != null"
+    }
+  ]
+}

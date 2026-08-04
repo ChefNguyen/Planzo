@@ -1,11 +1,34 @@
-<div align="center">
+# Planzo AI - Vibe-Based Travel Itinerary Generator
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Planzo AI is a modern travel itinerary planner powered by Google Gemini AI, Firebase Firestore, and Google Cloud Run.
 
-  <h1>Built with AI Studio</h2>
+## 🛠 Tech Stack & Architecture
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Frontend & Server**: Full-stack Node.js (Vite + React 19 + Express server)
+- **Language**: TypeScript (End-to-end type safety)
+- **Styling**: Tailwind CSS v4 + Glassmorphism / Fresh Ocean theme
+- **Authentication**: Firebase Authentication (Google Auth Provider)
+- **Database**: Firebase Firestore (Persistent user itineraries, community vault, real-time sync)
+- **AI Core**: Google Gemini API (`@google/genai` with Gemini 3.6 Flash model)
+- **Maps**: Interactive canvas map visualizer & location pin routing
+- **Calendar**: Google Calendar sync micro-interactions & schedule review
+- **CI/CD & Deployment**: Docker containerization target for Google Cloud Run
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 🚀 Environment Setup
 
-</div>
+1. Copy `.env.example` to `.env`:
+   ```bash
+   GEMINI_API_KEY="your-gemini-api-key"
+   ```
+
+2. Development:
+   ```bash
+   npm run dev
+   ```
+
+3. Production Build & Docker:
+   ```bash
+   npm run build
+   docker build -t planzo-ai .
+   docker run -p 3000:3000 planzo-ai
+   ```
