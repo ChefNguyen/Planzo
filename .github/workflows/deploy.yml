@@ -61,7 +61,7 @@ jobs:
             --max-instances 10 \
             --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest \
             --set-secrets GOOGLE_MAPS_PLATFORM_KEY=GOOGLE_MAPS_PLATFORM_KEY:latest \
-            --set-env-vars NODE_ENV=production
+            --set-env-vars NODE_ENV=production,GOOGLE_SEARCH_ENGINE_ID=04e3ac93a88804e30
 
       - name: Show deployed URL
         run: |

@@ -135,18 +135,29 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
         const lng = act.lng || (center.lng + lngOffset);
 
         const isSelected = selectedActivityId === act.id;
-        const pinSize = isSelected ? 38 : 32;
-        const iconAnchor = isSelected ? [19, 19] : [16, 16];
+        const pinSize = isSelected ? 36 : 30;
         const bgColor = isSelected ? '#a43c12' : '#00696b';
         const ringShadow = isSelected
-          ? '3px 3px 0px 0px #1b1c19'
-          : '2px 2px 0px 0px #1b1c19';
+          ? '4px 4px 0px 0px #1b1c19'
+          : '3px 3px 0px 0px #1b1c19';
 
         const customIcon = L.divIcon({
           className: 'custom-leaflet-marker',
           html: `
-            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${pinSize + 16}px; height: ${pinSize + 16}px;">
-              ${isSelected ? `<div style="position: absolute; inset: 0; border-radius: 50%; background: rgba(164, 60, 18, 0.3); animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
+            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${pinSize + 18}px; height: ${pinSize + 18}px;">
+              ${isSelected ? `
+                <div style="
+                  position: absolute;
+                  width: ${pinSize + 10}px;
+                  height: ${pinSize + 10}px;
+                  background: #00ced1;
+                  border: 2px solid #1b1c19;
+                  border-radius: 0px;
+                  box-shadow: 3px 3px 0px 0px #1b1c19;
+                  transform: rotate(45deg);
+                  z-index: 1;
+                "></div>
+              ` : ''}
               <div style="
                 position: relative;
                 width: ${pinSize}px;
@@ -154,27 +165,28 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
                 background: ${bgColor};
                 border-radius: 0px;
                 transform: rotate(45deg);
-                border: 2px solid #1b1c19;
+                border: 2.5px solid #1b1c19;
                 box-shadow: ${ringShadow};
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: all 0.2s ease;
+                transition: all 0.15s ease;
+                z-index: 10;
               ">
                 <span style="
                   transform: rotate(-45deg);
                   color: #ffffff;
                   font-weight: 900;
                   font-size: ${isSelected ? '15px' : '13px'};
-                  font-family: system-ui, -apple-system, sans-serif;
+                  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
                 ">${idx + 1}</span>
               </div>
             </div>
           `,
-          iconSize: [pinSize + 16, pinSize + 16],
-          iconAnchor: [ (pinSize + 16) / 2, (pinSize + 16) / 2 ],
-          popupAnchor: [0, - (pinSize / 2) - 8],
+          iconSize: [pinSize + 18, pinSize + 18],
+          iconAnchor: [(pinSize + 18) / 2, (pinSize + 18) / 2],
+          popupAnchor: [0, -(pinSize / 2) - 10],
         });
 
         const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
@@ -191,17 +203,17 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
         const popupSubtext = '#6b7a7a';
 
         const photoHtml = `
-          <div style="position: relative; width: 100%; height: 115px; overflow: hidden; border-radius: 0px; border-bottom: 2px solid #1b1c19;">
+          <div style="position: relative; width: 100%; height: 125px; overflow: hidden; border-radius: 0px; border-bottom: 2px solid #1b1c19;">
             <img src="${photoUrl}" alt="${act.title}" style="width: 100%; height: 100%; object-fit: cover;" />
-            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.15);"></div>
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.12);"></div>
             
-            <!-- Stop Tag (Top Left to avoid close button on Top Right) -->
-            <div style="position: absolute; top: 8px; left: 8px; background: #a43c12; color: #ffffff; font-weight: 900; font-size: 9.5px; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 0px; border: 1.5px solid #1b1c19; box-shadow: 2px 2px 0px 0px #1b1c19; text-transform: uppercase;">
+            <!-- Stop Tag (Top Left) -->
+            <div style="position: absolute; top: 8px; left: 8px; background: #a43c12; color: #ffffff; font-weight: 900; font-size: 10px; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 0px; border: 2px solid #1b1c19; box-shadow: 2px 2px 0px 0px #1b1c19; text-transform: uppercase;">
               STOP 0${idx + 1}
             </div>
 
             <!-- Floating Time Badge (Bottom Left) -->
-            <div style="position: absolute; bottom: 8px; left: 8px; background: #00696b; color: #ffffff; font-weight: 800; font-size: 10px; padding: 3px 8px; border-radius: 0px; border: 1.5px solid #1b1c19; box-shadow: 2px 2px 0px 0px #1b1c19; display: flex; align-items: center; gap: 4px;">
+            <div style="position: absolute; bottom: 8px; left: 8px; background: #00696b; color: #ffffff; font-weight: 900; font-size: 10px; font-family: 'Plus Jakarta Sans', sans-serif; padding: 3px 8px; border-radius: 0px; border: 2px solid #1b1c19; box-shadow: 2px 2px 0px 0px #1b1c19; display: flex; align-items: center; gap: 4px;">
               <span style="display: inline-block; width: 5px; height: 5px; background-color: #ffffff;"></span>
               <span>${act.time}</span>
             </div>
@@ -209,26 +221,28 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
         `;
 
         const popupContent = `
-          <div style="font-family: system-ui, -apple-system, sans-serif; padding: 0 12px 12px 12px; width: 230px; text-align: left; background-color: ${popupBg}; color: ${popupText}; border-radius: 0px;">
+          <div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 0 14px 14px 14px; width: 245px; text-align: left; background-color: ${popupBg}; color: ${popupText}; border-radius: 0px;">
             ${photoHtml}
             
-            <div style="margin-top: 6px;">
-              <div style="font-size: 14px; font-weight: 900; color: ${popupText}; line-height: 1.25;">${act.title}</div>
+            <div style="margin-top: 10px;">
+              <div style="font-size: 14.5px; font-weight: 900; color: ${popupText}; line-height: 1.25; font-family: 'Plus Jakarta Sans', sans-serif;">${act.title}</div>
               
-              ${act.location ? `<div style="font-size: 10px; color: ${popupSubtext}; margin-top: 2px; display: flex; align-items: center; gap: 3px;">📍 ${act.location}</div>` : ''}
+              ${act.location ? `<div style="font-size: 11px; color: ${popupSubtext}; margin-top: 4px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">
+                <span style="color: #00696b; font-weight: 900;">📍</span> ${act.location}
+              </div>` : ''}
 
-              <div style="display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 10.5px; font-weight: 800; color: #a43c12;">
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; font-weight: 800; color: #a43c12; font-family: 'Plus Jakarta Sans', sans-serif;">
                 <span>${ratingDisplay}</span>
-                <span style="color: ${popupSubtext}; font-weight: 500;">${reviewsDisplay}</span>
+                <span style="color: ${popupSubtext}; font-weight: 600;">${reviewsDisplay}</span>
               </div>
               
-              <!-- Vibe Accent Card -->
-              <div style="margin-top: 8px; border-left: 3px solid #00696b; background: #f5f3ee; border: 1.5px solid #1b1c19; padding: 6px 10px; border-radius: 0px; font-size: 10.5px; color: ${popupSubtext}; font-style: italic; font-weight: 600;">
+              <!-- Vibe Accent Card (Hard Neobrutalism) -->
+              <div style="margin-top: 8px; background: #f5f3ee; border: 2px solid #1b1c19; padding: 6px 10px; border-radius: 0px; font-size: 11px; color: #1b1c19; font-style: italic; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 2px 2px 0px 0px #1b1c19;">
                 "${act.vibe}"
               </div>
               
-              <!-- Sleek Compact CTA Button -->
-              <a href="${gmapsUrl}" target="_blank" rel="noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 10px; background: #00696b; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 0px; border: 2px solid #1b1c19; box-shadow: 3px 3px 0px 0px #1b1c19; font-size: 11px; font-weight: 800; text-align: center; transition: all 0.15s;">
+              <!-- Hard Neobrutalist CTA Button -->
+              <a href="${gmapsUrl}" target="_blank" rel="noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 12px; background: #00696b; color: #ffffff; text-decoration: none; padding: 9px 12px; border-radius: 0px; border: 2px solid #1b1c19; box-shadow: 3px 3px 0px 0px #1b1c19; font-size: 11px; font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; transition: all 0.15s;">
                 <span>View on Google Maps ↗</span>
               </a>
             </div>
@@ -275,48 +289,58 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       if (!marker) return;
 
       const isSelected = selectedActivityId === act.id;
-      const pinSize = isSelected ? 38 : 32;
-      const bgGradient = isSelected
-        ? 'linear-gradient(135deg, #ff5500, #a43c12)'
-        : 'linear-gradient(135deg, #00ced1, #005354)';
+      const pinSize = isSelected ? 36 : 30;
+      const bgColor = isSelected ? '#a43c12' : '#00696b';
       const ringShadow = isSelected
-        ? '0 10px 25px rgba(255, 85, 0, 0.65), 0 0 0 6px rgba(255, 85, 0, 0.25)'
-        : '0 6px 16px rgba(0, 83, 84, 0.45)';
+        ? '4px 4px 0px 0px #1b1c19'
+        : '3px 3px 0px 0px #1b1c19';
 
       const updatedIcon = L.divIcon({
         className: 'custom-leaflet-marker',
         html: `
-          <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${pinSize + 16}px; height: ${pinSize + 16}px;">
-            ${isSelected ? `<div style="position: absolute; inset: 0; border-radius: 50%; background: rgba(255, 85, 0, 0.35); animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
+          <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${pinSize + 18}px; height: ${pinSize + 18}px;">
+            ${isSelected ? `
+              <div style="
+                position: absolute;
+                width: ${pinSize + 10}px;
+                height: ${pinSize + 10}px;
+                background: #00ced1;
+                border: 2px solid #1b1c19;
+                border-radius: 0px;
+                box-shadow: 3px 3px 0px 0px #1b1c19;
+                transform: rotate(45deg);
+                z-index: 1;
+              "></div>
+            ` : ''}
             <div style="
               position: relative;
               width: ${pinSize}px;
               height: ${pinSize}px;
-              background: ${bgGradient};
-              border-radius: 10px;
+              background: ${bgColor};
+              border-radius: 0px;
               transform: rotate(45deg);
-              border: 2.5px solid #ffffff;
+              border: 2.5px solid #1b1c19;
               box-shadow: ${ringShadow};
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
-              transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+              transition: all 0.15s ease;
+              z-index: 10;
             ">
               <span style="
                 transform: rotate(-45deg);
                 color: #ffffff;
                 font-weight: 900;
                 font-size: ${isSelected ? '15px' : '13px'};
-                font-family: system-ui, -apple-system, sans-serif;
-                text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+                font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
               ">${idx + 1}</span>
             </div>
           </div>
         `,
-        iconSize: [pinSize + 16, pinSize + 16],
-        iconAnchor: [(pinSize + 16) / 2, (pinSize + 16) / 2],
-        popupAnchor: [0, -(pinSize / 2) - 8],
+        iconSize: [pinSize + 18, pinSize + 18],
+        iconAnchor: [(pinSize + 18) / 2, (pinSize + 18) / 2],
+        popupAnchor: [0, -(pinSize / 2) - 10],
       });
 
       marker.setIcon(updatedIcon);
