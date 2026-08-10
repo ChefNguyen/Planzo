@@ -276,9 +276,6 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                             alt={act.title}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
-                          <span className="absolute bottom-1 right-1 bg-[#1b1c19] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-none border border-white/20">
-                            Pexels
-                          </span>
                         </div>
 
                         {/* Content Details */}
