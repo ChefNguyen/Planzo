@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
+import React, { useState, useEffect, useRef } from 'react';
 import { Activity } from '../types';
-import { MapPin, Key, ExternalLink } from 'lucide-react';
+import { MapPin, ExternalLink, Star, Sparkles } from 'lucide-react';
+import { getPlacePhoto } from '../lib/photoUtils';
 
 interface GoogleMapViewProps {
   destination: string;
@@ -10,18 +10,36 @@ interface GoogleMapViewProps {
   onSelectActivity: (id: string) => void;
 }
 
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  process.env.GOOGLE_MAPS_API_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  '';
-
-const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
-
-// Default center coordinates mapping for common destinations
+// Comprehensive center coordinates mapping for Vietnam & global destinations
 const DESTINATION_COORDS: Record<string, { lat: number; lng: number }> = {
+  'quy nhon': { lat: 13.7820, lng: 109.2194 },
+  'binh dinh': { lat: 13.7820, lng: 109.2194 },
+  'nha trang': { lat: 12.2388, lng: 109.1967 },
+  'khanh hoa': { lat: 12.2388, lng: 109.1967 },
+  'phu quoc': { lat: 10.2899, lng: 103.9840 },
+  'ha noi': { lat: 21.0285, lng: 105.8542 },
+  hanoi: { lat: 21.0285, lng: 105.8542 },
+  saigon: { lat: 10.8231, lng: 106.6297 },
+  'ho chi minh': { lat: 10.8231, lng: 106.6297 },
+  'da lat': { lat: 11.9404, lng: 108.4583 },
+  dalat: { lat: 11.9404, lng: 108.4583 },
+  sapa: { lat: 22.3364, lng: 103.8438 },
+  'sa pa': { lat: 22.3364, lng: 103.8438 },
+  'hoi an': { lat: 15.8801, lng: 108.3380 },
+  hue: { lat: 16.4637, lng: 107.5909 },
+  'ha long': { lat: 20.9599, lng: 107.0425 },
+  'quang ninh': { lat: 20.9599, lng: 107.0425 },
+  'vung tau': { lat: 10.3460, lng: 107.0843 },
+  'phan thiet': { lat: 10.9804, lng: 108.2615 },
+  'mui ne': { lat: 10.9333, lng: 108.2833 },
+  'can tho': { lat: 10.0452, lng: 105.7469 },
+  'ninh binh': { lat: 20.2506, lng: 105.9744 },
+  'phong nha': { lat: 17.5906, lng: 106.2826 },
+  'ha giang': { lat: 22.8094, lng: 104.9818 },
+  'con dao': { lat: 8.6833, lng: 106.6000 },
+  'da nang': { lat: 16.0544, lng: 108.2022 },
+  'tuy hoa': { lat: 13.0882, lng: 109.3149 },
+  'phu yen': { lat: 13.0882, lng: 109.3149 },
   kyoto: { lat: 35.0116, lng: 135.7681 },
   tokyo: { lat: 35.6762, lng: 139.6503 },
   paris: { lat: 48.8566, lng: 2.3522 },
@@ -31,7 +49,6 @@ const DESTINATION_COORDS: Record<string, { lat: number; lng: number }> = {
   london: { lat: 51.5074, lng: -0.1278 },
   rome: { lat: 41.9028, lng: 12.4964 },
   bangkok: { lat: 13.7563, lng: 100.5018 },
-  'da nang': { lat: 16.0544, lng: 108.2022 },
 };
 
 export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
@@ -40,135 +57,305 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   selectedActivityId,
   onSelectActivity,
 }) => {
-  const [infoWindowOpenId, setInfoWindowOpenId] = useState<string | null>(selectedActivityId);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
+  const markersRef = useRef<Record<string, any>>({});
 
-  useEffect(() => {
-    setInfoWindowOpenId(selectedActivityId);
-  }, [selectedActivityId]);
-
-  // Determine map center
   const destLower = destination.toLowerCase();
   const matchedKey = Object.keys(DESTINATION_COORDS).find((k) => destLower.includes(k));
-  const center = matchedKey ? DESTINATION_COORDS[matchedKey] : { lat: 35.0116, lng: 135.7681 };
 
-  // Calculate slight offsets for activities so pins don't overlap
-  const activityPositions = activities.map((act, idx) => {
-    const latOffset = (idx % 2 === 0 ? 1 : -1) * (Math.floor(idx / 2) + 1) * 0.006;
-    const lngOffset = (idx % 3 === 0 ? 1 : -1) * (Math.floor(idx / 3) + 1) * 0.008;
-    return {
-      ...act,
-      position: {
-        lat: center.lat + latOffset,
-        lng: center.lng + lngOffset,
-      },
-    };
-  });
+  // Dynamic center: Use first activity's lat/lng if present, else fallback to DESTINATION_COORDS lookup
+  const firstActWithCoords = activities.find((a) => a.lat && a.lng);
+  const center = firstActWithCoords
+    ? { lat: firstActWithCoords.lat!, lng: firstActWithCoords.lng! }
+    : matchedKey
+    ? DESTINATION_COORDS[matchedKey]
+    : { lat: 16.0544, lng: 108.2022 };
 
-  if (!hasValidKey) {
-    return (
-      <div className="w-full h-full min-h-[450px] bg-[#f5f3ee] flex flex-col items-center justify-center p-6 text-center border border-[#bac9c9]/30 rounded-2xl shadow-inner">
-        <div className="w-14 h-14 rounded-full bg-[#00ced1]/20 text-[#00696b] flex items-center justify-center mb-4">
-          <Key className="w-7 h-7" />
-        </div>
-        <h3 className="font-headline font-bold text-xl text-[#1b1c19] mb-2">
-          Google Maps API Key Required
-        </h3>
-        <p className="text-sm text-[#3b4949] max-w-md mb-6 leading-relaxed">
-          To enable live interactive Google Maps rendering, place coordinates, and route calculations, please configure your key.
-        </p>
+  const selectedActivity = activities.find((a) => a.id === selectedActivityId) || activities[0];
 
-        <div className="bg-white p-4 rounded-xl border border-[#bac9c9]/40 text-left text-xs text-[#3b4949] space-y-2 max-w-md w-full mb-6">
-          <p className="font-bold text-[#00696b]">How to configure Google Maps API Key:</p>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>
-              Get an API key at{' '}
-              <a
-                href="https://console.cloud.google.com/google/maps-apis/start?utm_campaign=gmp-code-assist-ais"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[#00696b] font-semibold underline inline-flex items-center gap-0.5"
-              >
-                Google Cloud Console <ExternalLink className="w-3 h-3" />
-              </a>
-            </li>
-            <li>
-              Open <strong>Settings</strong> (⚙️ top-right) → <strong>Secrets</strong>
-            </li>
-            <li>
-              Add Secret key: <code className="bg-[#f0eee6] px-1.5 py-0.5 rounded font-mono text-[#00696b]">GOOGLE_MAPS_PLATFORM_KEY</code>
-            </li>
-            <li>Paste your key & press Enter (the app rebuilds automatically).</li>
-          </ol>
-        </div>
+  useEffect(() => {
+    let isSubscribed = true;
 
-        {/* Fallback Static Visual Representation */}
-        <div className="w-full max-w-md p-3 bg-[#00696b]/10 rounded-xl border border-[#00696b]/20 flex items-center gap-3">
-          <MapPin className="w-5 h-5 text-[#00696b] shrink-0" />
-          <div className="text-left">
-            <span className="text-xs font-bold text-[#00696b] block">{destination} Stops</span>
-            <span className="text-[11px] text-[#3b4949]">{activities.length} activity pins ready for display</span>
+    const loadLeaflet = async () => {
+      // 1. Inject Leaflet CSS
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
+
+      // 2. Inject Leaflet JS
+      if (!(window as any).L) {
+        await new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.onload = resolve;
+          document.head.appendChild(script);
+        });
+      }
+
+      const L = (window as any).L;
+      if (!L || !mapContainerRef.current || !isSubscribed) return;
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
+      // Initialize map
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false,
+      }).setView([center.lat, center.lng], 13);
+      mapInstanceRef.current = map;
+
+      // Add zoom control to top-right
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      // CartoDB Voyager tiles (Always vibrant Light Mode map for maximum legibility & color richness)
+      const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+      const tileLayer = L.tileLayer(tileUrl, {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(map);
+      tileLayerRef.current = tileLayer;
+
+      markersRef.current = {};
+
+      // Add numbered activity pins
+      activities.forEach((act, idx) => {
+        const latOffset = (idx % 2 === 0 ? 1 : -1) * (Math.floor(idx / 2) + 1) * 0.006;
+        const lngOffset = (idx % 3 === 0 ? 1 : -1) * (Math.floor(idx / 3) + 1) * 0.008;
+        const lat = act.lat || (center.lat + latOffset);
+        const lng = act.lng || (center.lng + lngOffset);
+
+        const isSelected = selectedActivityId === act.id;
+        const pinSize = isSelected ? 38 : 32;
+        const iconAnchor = isSelected ? [19, 19] : [16, 16];
+        const bgColor = isSelected ? '#a43c12' : '#00696b';
+        const ringShadow = isSelected
+          ? '3px 3px 0px 0px #1b1c19'
+          : '2px 2px 0px 0px #1b1c19';
+
+        const customIcon = L.divIcon({
+          className: 'custom-leaflet-marker',
+          html: `
+            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${pinSize + 16}px; height: ${pinSize + 16}px;">
+              ${isSelected ? `<div style="position: absolute; inset: 0; border-radius: 50%; background: rgba(164, 60, 18, 0.3); animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
+              <div style="
+                position: relative;
+                width: ${pinSize}px;
+                height: ${pinSize}px;
+                background: ${bgColor};
+                border-radius: 0px;
+                transform: rotate(45deg);
+                border: 2px solid #1b1c19;
+                box-shadow: ${ringShadow};
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+              ">
+                <span style="
+                  transform: rotate(-45deg);
+                  color: #ffffff;
+                  font-weight: 900;
+                  font-size: ${isSelected ? '15px' : '13px'};
+                  font-family: system-ui, -apple-system, sans-serif;
+                ">${idx + 1}</span>
+              </div>
+            </div>
+          `,
+          iconSize: [pinSize + 16, pinSize + 16],
+          iconAnchor: [ (pinSize + 16) / 2, (pinSize + 16) / 2 ],
+          popupAnchor: [0, - (pinSize / 2) - 8],
+        });
+
+        const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+        markersRef.current[act.id] = marker;
+
+        const gmapsUrl = act.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.title + ' ' + (act.location || destination))}`;
+        const ratingDisplay = act.rating ? `★ ${act.rating.toFixed(1)}` : '★ 4.8';
+        const reviewsDisplay = act.userRatingsTotal ? `(${act.userRatingsTotal.toLocaleString()} Reviews)` : '(180+ Reviews)';
+
+        const photoUrl = getPlacePhoto(act, destination);
+
+        const popupBg = '#ffffff';
+        const popupText = '#1b1c19';
+        const popupSubtext = '#6b7a7a';
+
+        const photoHtml = `
+          <div style="position: relative; width: 100%; height: 115px; overflow: hidden; border-radius: 0px; border-bottom: 2px solid #1b1c19;">
+            <img src="${photoUrl}" alt="${act.title}" style="width: 100%; height: 100%; object-fit: cover;" />
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.15);"></div>
+            
+            <!-- Stop Tag (Top Left to avoid close button on Top Right) -->
+            <div style="position: absolute; top: 8px; left: 8px; background: #a43c12; color: #ffffff; font-weight: 900; font-size: 9.5px; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 0px; border: 1.5px solid #1b1c19; box-shadow: 2px 2px 0px 0px #1b1c19; text-transform: uppercase;">
+              STOP 0${idx + 1}
+            </div>
+
+            <!-- Floating Time Badge (Bottom Left) -->
+            <div style="position: absolute; bottom: 8px; left: 8px; background: #00696b; color: #ffffff; font-weight: 800; font-size: 10px; padding: 3px 8px; border-radius: 0px; border: 1.5px solid #1b1c19; box-shadow: 2px 2px 0px 0px #1b1c19; display: flex; align-items: center; gap: 4px;">
+              <span style="display: inline-block; width: 5px; height: 5px; background-color: #ffffff;"></span>
+              <span>${act.time}</span>
+            </div>
           </div>
-        </div>
-      </div>
-    );
-  }
+        `;
+
+        const popupContent = `
+          <div style="font-family: system-ui, -apple-system, sans-serif; padding: 0 12px 12px 12px; width: 230px; text-align: left; background-color: ${popupBg}; color: ${popupText}; border-radius: 0px;">
+            ${photoHtml}
+            
+            <div style="margin-top: 6px;">
+              <div style="font-size: 14px; font-weight: 900; color: ${popupText}; line-height: 1.25;">${act.title}</div>
+              
+              ${act.location ? `<div style="font-size: 10px; color: ${popupSubtext}; margin-top: 2px; display: flex; align-items: center; gap: 3px;">📍 ${act.location}</div>` : ''}
+
+              <div style="display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 10.5px; font-weight: 800; color: #a43c12;">
+                <span>${ratingDisplay}</span>
+                <span style="color: ${popupSubtext}; font-weight: 500;">${reviewsDisplay}</span>
+              </div>
+              
+              <!-- Vibe Accent Card -->
+              <div style="margin-top: 8px; border-left: 3px solid #00696b; background: #f5f3ee; border: 1.5px solid #1b1c19; padding: 6px 10px; border-radius: 0px; font-size: 10.5px; color: ${popupSubtext}; font-style: italic; font-weight: 600;">
+                "${act.vibe}"
+              </div>
+              
+              <!-- Sleek Compact CTA Button -->
+              <a href="${gmapsUrl}" target="_blank" rel="noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 10px; background: #00696b; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 0px; border: 2px solid #1b1c19; box-shadow: 3px 3px 0px 0px #1b1c19; font-size: 11px; font-weight: 800; text-align: center; transition: all 0.15s;">
+                <span>View on Google Maps ↗</span>
+              </a>
+            </div>
+          </div>
+        `;
+        marker.bindPopup(popupContent, {
+          autoPan: true,
+          autoPanPaddingTopLeft: [30, 90],
+          autoPanPaddingBottomRight: [30, 30],
+        });
+
+        marker.on('click', () => {
+          onSelectActivity(act.id);
+        });
+      });
+    };
+
+    loadLeaflet();
+
+    return () => {
+      isSubscribed = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [destination, activities]);
+
+  // Dynamic pan to center when destination center changes
+  useEffect(() => {
+    if (mapInstanceRef.current && center) {
+      mapInstanceRef.current.setView([center.lat, center.lng], 13);
+    }
+  }, [center.lat, center.lng]);
+
+  // Center map camera on selected activity & dynamically update pin selection states
+  useEffect(() => {
+    if (!mapInstanceRef.current || !(window as any).L) return;
+    const L = (window as any).L;
+
+    // 1. Update all marker icons to reflect active selection
+    activities.forEach((act, idx) => {
+      const marker = markersRef.current[act.id];
+      if (!marker) return;
+
+      const isSelected = selectedActivityId === act.id;
+      const pinSize = isSelected ? 38 : 32;
+      const bgGradient = isSelected
+        ? 'linear-gradient(135deg, #ff5500, #a43c12)'
+        : 'linear-gradient(135deg, #00ced1, #005354)';
+      const ringShadow = isSelected
+        ? '0 10px 25px rgba(255, 85, 0, 0.65), 0 0 0 6px rgba(255, 85, 0, 0.25)'
+        : '0 6px 16px rgba(0, 83, 84, 0.45)';
+
+      const updatedIcon = L.divIcon({
+        className: 'custom-leaflet-marker',
+        html: `
+          <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${pinSize + 16}px; height: ${pinSize + 16}px;">
+            ${isSelected ? `<div style="position: absolute; inset: 0; border-radius: 50%; background: rgba(255, 85, 0, 0.35); animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : ''}
+            <div style="
+              position: relative;
+              width: ${pinSize}px;
+              height: ${pinSize}px;
+              background: ${bgGradient};
+              border-radius: 10px;
+              transform: rotate(45deg);
+              border: 2.5px solid #ffffff;
+              box-shadow: ${ringShadow};
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            ">
+              <span style="
+                transform: rotate(-45deg);
+                color: #ffffff;
+                font-weight: 900;
+                font-size: ${isSelected ? '15px' : '13px'};
+                font-family: system-ui, -apple-system, sans-serif;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+              ">${idx + 1}</span>
+            </div>
+          </div>
+        `,
+        iconSize: [pinSize + 16, pinSize + 16],
+        iconAnchor: [(pinSize + 16) / 2, (pinSize + 16) / 2],
+        popupAnchor: [0, -(pinSize / 2) - 8],
+      });
+
+      marker.setIcon(updatedIcon);
+    });
+
+    // 2. Smoothly fly camera to selected pin with mathematical offset so popup is centered with 90px top margin
+    if (selectedActivityId && markersRef.current[selectedActivityId]) {
+      const selectedMarker = markersRef.current[selectedActivityId];
+      const latLng = selectedMarker.getLatLng();
+
+      const map = mapInstanceRef.current;
+      const currentZoom = map.getZoom();
+      const targetZoom = Math.max(currentZoom, 14);
+
+      // Convert point to screen pixels, offset 90px North (upwards), and unproject back to LatLng
+      const targetPoint = map.project(latLng, targetZoom).subtract([0, 90]);
+      const targetCenter = map.unproject(targetPoint, targetZoom);
+
+      map.flyTo(targetCenter, targetZoom, {
+        animate: true,
+        duration: 0.5,
+      });
+
+      selectedMarker.openPopup();
+    }
+  }, [selectedActivityId, activities]);
+
+  const selectedPhotoUrl = selectedActivity ? getPlacePhoto(selectedActivity, destination) : '';
 
   return (
-    <div className="w-full h-full min-h-[450px] relative rounded-2xl overflow-hidden shadow-inner border border-[#bac9c9]/30">
-      <APIProvider apiKey={API_KEY} version="weekly">
-        <Map
-          defaultCenter={center}
-          defaultZoom={13}
-          mapId="PLANZO_TRAVEL_MAP"
-          internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-          style={{ width: '100%', height: '100%', minHeight: '450px' }}
-          gestureHandling="greedy"
-        >
-          {activityPositions.map((act, index) => {
-            const isSelected = selectedActivityId === act.id;
-            return (
-              <React.Fragment key={act.id}>
-                <AdvancedMarker
-                  position={act.position}
-                  title={act.title}
-                  onClick={() => {
-                    onSelectActivity(act.id);
-                    setInfoWindowOpenId(act.id);
-                  }}
-                >
-                  <Pin
-                    background={isSelected ? '#a43c12' : '#00696b'}
-                    glyphColor="#ffffff"
-                    borderColor="#ffffff"
-                    glyphText={`${index + 1}`}
-                  />
-                </AdvancedMarker>
+    <div className="w-full h-full min-h-[300px] relative rounded-none overflow-hidden border-2 border-[#1b1c19] flex flex-col shadow-[4px_4px_0px_0px_#00696b]">
+      {/* Map Canvas */}
+      <div ref={mapContainerRef} className="w-full h-full flex-1 min-h-[300px]" />
 
-                {infoWindowOpenId === act.id && (
-                  <InfoWindow
-                    position={act.position}
-                    onCloseClick={() => setInfoWindowOpenId(null)}
-                  >
-                    <div className="p-1 max-w-xs font-sans">
-                      <div className="text-[10px] font-bold text-[#00696b] uppercase tracking-wider mb-0.5">
-                        {act.time}
-                      </div>
-                      <h4 className="font-bold text-sm text-[#1b1c19]">{act.title}</h4>
-                      <p className="text-xs text-[#3b4949] italic mt-1 font-medium">"{act.vibe}"</p>
-                      {act.location && (
-                        <div className="flex items-center gap-1 text-[11px] text-[#6b7a7a] mt-2 border-t pt-1 border-[#bac9c9]/30">
-                          <MapPin className="w-3.5 h-3.5 text-[#00696b]" />
-                          <span>{act.location}</span>
-                        </div>
-                      )}
-                    </div>
-                  </InfoWindow>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </Map>
-      </APIProvider>
+      {/* Bottom Map Watermark Badge */}
+      <div className="absolute bottom-3 left-3 z-[1000] bg-white px-3 py-1.5 rounded-none border-2 border-[#1b1c19] text-[11px] font-headline font-black uppercase text-[#00696b] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center gap-2">
+        <span className="w-2 h-2 bg-[#00ced1] animate-pulse"></span>
+        <span>Interactive Map (CartoDB)</span>
+      </div>
     </div>
   );
 };

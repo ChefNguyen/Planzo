@@ -74,6 +74,43 @@ export const signInWithGoogle = async () => {
   }
 };
 
+/**
+ * Connects (or re-connects) Google Calendar OAuth with prompt: 'select_account'
+ * so user can pick either their current logged-in Google account or a different Google account for Calendar.
+ */
+export const connectGoogleCalendarAccount = async () => {
+  try {
+    const calendarProvider = new GoogleAuthProvider();
+    calendarProvider.addScope('https://www.googleapis.com/auth/calendar.events');
+    calendarProvider.setCustomParameters({ prompt: 'select_account' });
+
+    const result = await signInWithPopup(auth, calendarProvider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const accessToken = credential?.accessToken;
+    const gcalEmail = result.user?.email;
+
+    if (accessToken) {
+      sessionStorage.setItem('gcal_access_token', accessToken);
+    }
+    if (gcalEmail) {
+      sessionStorage.setItem('gcal_account_email', gcalEmail);
+    }
+
+    return { user: result.user, accessToken, email: gcalEmail, error: null };
+  } catch (error: any) {
+    console.warn('Google Calendar OAuth error:', error);
+    if (
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request' ||
+      error?.code === 'auth/popup-blocked'
+    ) {
+      return { user: null, accessToken: null, email: null, error: 'cancelled' };
+    }
+    // Google Cloud OAuth Unverified / Testing 403 access_denied
+    return { user: null, accessToken: null, email: null, error: 'access_denied' };
+  }
+};
+
 export const logoutUser = async () => {
   try {
     await firebaseSignOut(auth);

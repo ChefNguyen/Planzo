@@ -1,0 +1,24 @@
+{
+  "firestore": {
+    "database": "ai-studio-planzoaitravelit-5c2fec32-ffa4-490f-9261-5ad0e35c2f4d",
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "site": "planzo-ai",
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "planzo-ai",
+          "region": "us-west1"
+        }
+      }
+    ]
+  }
+}

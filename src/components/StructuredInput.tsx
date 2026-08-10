@@ -7,11 +7,6 @@ import {
   ChevronDown,
   Clock,
   X,
-  Globe,
-  Sparkles,
-  ArrowRight,
-  Sun,
-  Compass,
 } from 'lucide-react';
 import { StructuredFormData } from '../types';
 
@@ -64,15 +59,6 @@ const AVAILABLE_VIBES = [
   'Culture & History',
   'Romantic',
 ];
-
-function getCountryFlag(countryCode?: string): string {
-  if (!countryCode || countryCode.length !== 2) return '🌐';
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map((char) => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
 
 export const StructuredInput: React.FC<StructuredInputProps> = ({
   formData,
@@ -188,11 +174,20 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
     setIsDestFocused(false);
   };
 
-  // Calculate Duration in Days & Nights
+  // Calculate Duration in Days & Nights (Local Time, Stricter Format)
   const calculateDuration = (start: string, end: string) => {
-    if (!start || !end) return { days: 0, nights: 0, formatted: '' };
-    const d1 = new Date(start);
-    const d2 = new Date(end);
+    if (!start || !end) return { days: 0, nights: 0, durationText: '', formatted: '' };
+
+    const parseLocalDate = (dateStr: string) => {
+      const parts = dateStr.split('-').map(Number);
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      return new Date(dateStr);
+    };
+
+    const d1 = parseLocalDate(start);
+    const d2 = parseLocalDate(end);
     const diffTime = d2.getTime() - d1.getTime();
     const diffDays = Math.max(1, Math.round(diffTime / (1000 * 3600 * 24)) + 1);
     const nights = Math.max(0, diffDays - 1);
@@ -201,8 +196,9 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
       return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
-    const formatted = `${formatDateStr(d1)} - ${formatDateStr(d2)} (${diffDays} Days)`;
-    return { days: diffDays, nights, formatted };
+    const durationText = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} • ${nights} ${nights === 1 ? 'night' : 'nights'}`;
+    const formatted = `${formatDateStr(d1)} - ${formatDateStr(d2)} (${durationText})`;
+    return { days: diffDays, nights, durationText, formatted };
   };
 
   // Sync date inputs to formData.dates
@@ -243,19 +239,11 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
     }
   };
 
-  const toggleVibe = (vibe: string) => {
-    const exists = formData.selectedVibes.includes(vibe);
-    if (exists) {
-      onChange({
-        ...formData,
-        selectedVibes: formData.selectedVibes.filter((v) => v !== vibe),
-      });
-    } else {
-      onChange({
-        ...formData,
-        selectedVibes: [...formData.selectedVibes, vibe],
-      });
-    }
+  const selectVibe = (vibe: string) => {
+    onChange({
+      ...formData,
+      selectedVibes: [vibe],
+    });
   };
 
   const handleAddCustomVibe = (e: React.FormEvent) => {
@@ -272,20 +260,20 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
   const currentDurationInfo = calculateDuration(fromDate, toDate);
 
   return (
-    <div className="glass-card rounded-[24px] p-6 sm:p-8 w-full max-w-4xl mx-auto transition-all shadow-xl relative">
+    <div className="neobrutal-card p-6 sm:p-8 w-full max-w-4xl mx-auto relative">
       {/* Mode Switcher Tabs */}
       <div className="flex items-center gap-2 mb-6">
-        <div className="flex bg-[#f5f3ee] p-1 rounded-xl gap-1 border border-[#bac9c9]/30">
+        <div className="flex bg-[#f5f3ee] p-1.5 gap-2 border-2 border-[#1b1c19] rounded-none">
           <button
             type="button"
-            className="px-5 py-2 rounded-lg font-headline text-sm font-semibold transition-all bg-white shadow-xs text-[#00696b]"
+            className="px-5 py-2.5 rounded-none font-headline text-xs font-black uppercase tracking-wider transition-all bg-[#00696b] text-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]"
           >
             Structured
           </button>
           <button
             type="button"
             onClick={() => onSwitchMode('prompt')}
-            className="px-5 py-2 rounded-lg font-headline text-sm font-semibold transition-all text-[#3b4949] hover:text-[#00696b]"
+            className="px-5 py-2.5 rounded-none font-headline text-xs font-black uppercase tracking-wider transition-all text-[#3b4949] hover:text-[#00696b] border-2 border-transparent hover:border-[#1b1c19]"
           >
             AI Prompt Genius
           </button>
@@ -296,10 +284,10 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* DESTINATION FIELD WITH AUTOCOMPLETE SEARCH */}
         <div className="flex flex-col gap-2 relative" ref={destDropdownRef}>
-          <label className="text-xs font-bold tracking-wider text-[#3b4949] uppercase ml-1 flex items-center justify-between">
+          <label className="text-xs font-headline font-black tracking-wider text-[#3b4949] uppercase ml-1 flex items-center justify-between">
             <span>Destination</span>
             {formData.destination && (
-              <span className="text-[10px] text-[#00696b] normal-case font-semibold">
+              <span className="text-[10px] text-[#00696b] normal-case font-extrabold">
                 ✓ Ready to search
               </span>
             )}
@@ -315,7 +303,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                 setIsDestFocused(true);
               }}
               placeholder="Search city, e.g. Tokyo, Kyoto, Da Nang..."
-              className="w-full pl-12 pr-10 py-3 bg-white/80 border-2 border-[#bac9c9] focus:border-[#00ced1] focus:bg-white focus:outline-none rounded-xl font-body text-base text-[#1b1c19] placeholder:text-[#6b7a7a] transition-all shadow-2xs font-medium"
+              className="w-full pl-12 pr-10 py-3.5 bg-white border-2 border-[#1b1c19] focus:border-[#00696b] focus:shadow-[3px_3px_0px_0px_#00696b] outline-none font-body text-base text-[#1b1c19] placeholder:text-[#6b7a7a] transition-all rounded-none shadow-[2px_2px_0px_0px_#1b1c19] font-bold"
             />
             {formData.destination ? (
               <button
@@ -330,10 +318,10 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
             )}
           </div>
 
-          {/* AUTOCOMPLETE POPUP DROPDOWN */}
+          {/* AUTOCOMPLETE POPUP DROPDOWN (HARD NEOBRUTALISM) */}
           {isDestFocused && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-2xl border border-[#bac9c9]/40 p-3 max-h-80 overflow-y-auto animate-in slide-in-from-top-2 duration-150">
-              <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-extrabold text-[#00696b] uppercase tracking-wider border-b border-[#bac9c9]/20 mb-2">
+            <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white text-[#1b1c19] rounded-none shadow-[4px_4px_0px_0px_#1b1c19] border-2 border-[#1b1c19] p-3 max-h-80 overflow-y-auto animate-in slide-in-from-top-2 duration-150">
+              <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-extrabold text-[#00696b] uppercase tracking-wider border-b-2 border-[#1b1c19]/20 mb-2">
                 <span>
                   {formData.destination.trim().length >= 2
                     ? 'Global Search Results (Live API)'
@@ -362,10 +350,12 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                     <div
                       key={dest.name + idx}
                       onClick={() => handleSelectDestination(dest.name)}
-                      className="p-2.5 rounded-xl hover:bg-[#f5f3ee] cursor-pointer flex items-center justify-between transition-colors group"
+                      className="p-2.5 rounded-none hover:bg-[#f5f3ee] cursor-pointer flex items-center justify-between transition-colors border border-transparent hover:border-[#1b1c19] group"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xl shrink-0">{dest.flag}</span>
+                        <div className="w-7 h-7 bg-[#00696b]/10 border border-[#00696b]/30 flex items-center justify-center rounded-none shrink-0">
+                          <MapPin className="w-3.5 h-3.5 text-[#00696b]" />
+                        </div>
                         <div>
                           <h4 className="text-xs font-bold text-[#1b1c19] group-hover:text-[#00696b] transition-colors">
                             {dest.name}
@@ -373,7 +363,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                           <span className="text-[10px] text-[#6b7a7a]">{dest.country}</span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-semibold text-[#00696b] bg-[#00ced1]/15 px-2.5 py-0.5 rounded-full">
+                      <span className="text-[10px] font-headline font-black uppercase text-[#00696b] bg-[#00ced1]/15 px-2.5 py-0.5 rounded-none border border-[#00696b]/30">
                         {dest.vibeTag}
                       </span>
                     </div>
@@ -385,7 +375,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsDestFocused(false)}
-                    className="px-4 py-1.5 bg-[#00696b] text-white rounded-lg text-xs font-bold shadow-2xs"
+                    className="px-4 py-1.5 bg-[#00696b] text-white rounded-none text-xs font-bold border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]"
                   >
                     Use "{formData.destination}"
                   </button>
@@ -397,10 +387,10 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
 
         {/* DATES FIELD WITH DURATION & RANGE POPUP */}
         <div className="flex flex-col gap-2 relative" ref={datePickerRef}>
-          <label className="text-xs font-bold tracking-wider text-[#3b4949] uppercase ml-1 flex items-center justify-between">
+          <label className="text-xs font-headline font-black tracking-wider text-[#3b4949] uppercase ml-1 flex items-center justify-between">
             <span>Trip Dates & Duration</span>
             {currentDurationInfo.days > 0 && (
-              <span className="text-[10px] font-extrabold text-[#a43c12] bg-[#a43c12]/10 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-extrabold text-[#a43c12] bg-[#a43c12]/10 px-2 py-0.5 rounded-none border border-[#a43c12]/30">
                 {currentDurationInfo.days} Days / {currentDurationInfo.nights} Nights
               </span>
             )}
@@ -413,15 +403,15 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
               readOnly
               value={formData.dates || 'Select Dates & Duration'}
               onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-              className="w-full pl-12 pr-10 py-3 bg-white/80 border-2 border-[#bac9c9] focus:border-[#00ced1] focus:bg-white focus:outline-none rounded-xl font-body text-base text-[#1b1c19] cursor-pointer transition-all shadow-2xs font-medium"
+              className="w-full pl-12 pr-10 py-3 bg-white border-2 border-[#1b1c19] focus:border-[#00696b] focus:outline-none rounded-none font-body text-base text-[#1b1c19] cursor-pointer transition-all shadow-[2px_2px_0px_0px_#1b1c19] font-bold"
             />
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7a7a] w-4 h-4 pointer-events-none" />
           </div>
 
-          {/* DURATION & DATE RANGE PICKER OVERLAY */}
+          {/* DURATION & DATE RANGE PICKER OVERLAY (HARD NEOBRUTALISM) */}
           {isDatePickerOpen && (
-            <div className="absolute top-full right-0 left-0 sm:left-auto sm:w-[380px] mt-2 z-50 bg-white rounded-3xl shadow-2xl border border-[#bac9c9]/40 p-5 space-y-4 animate-in slide-in-from-top-2 duration-150">
-              <div className="flex items-center justify-between pb-2 border-b border-[#bac9c9]/20">
+            <div className="absolute top-full right-0 left-0 sm:left-auto sm:w-[380px] mt-2 z-50 bg-white text-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#00696b] border-2 border-[#1b1c19] p-5 space-y-4 animate-in slide-in-from-top-2 duration-150">
+              <div className="flex items-center justify-between pb-2 border-b-2 border-[#1b1c19]/20">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#00696b]" />
                   <h3 className="font-headline font-bold text-sm text-[#1b1c19]">
@@ -439,7 +429,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
 
               {/* Quick Duration Presets */}
               <div>
-                <span className="block text-[11px] font-bold text-[#00696b] uppercase tracking-wider mb-2">
+                <span className="block text-[11px] font-headline font-black text-[#00696b] uppercase tracking-wider mb-2">
                   Quick Duration Presets
                 </span>
                 <div className="grid grid-cols-3 gap-2">
@@ -454,11 +444,10 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                       key={preset.label}
                       type="button"
                       onClick={() => handleSelectPreset(preset.count, preset.label)}
-                      className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all border ${
-                        activePreset === preset.label
-                          ? 'bg-[#00696b] text-white border-[#00696b] shadow-xs'
-                          : 'bg-[#f5f3ee] text-[#3b4949] border-[#bac9c9]/30 hover:bg-[#eae8e3]'
-                      }`}
+                      className={`py-2 px-2 text-center rounded-none text-xs font-bold transition-all border-2 border-[#1b1c19] ${activePreset === preset.label
+                          ? 'bg-[#00696b] text-white shadow-[2px_2px_0px_0px_#1b1c19]'
+                          : 'bg-[#f5f3ee] text-[#3b4949] hover:bg-[#eae8e3]'
+                        }`}
                     >
                       {preset.label}
                     </button>
@@ -476,7 +465,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                     type="date"
                     value={fromDate}
                     onChange={(e) => handleCustomDateChange('from', e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#f5f3ee] border border-[#bac9c9]/40 text-xs font-semibold text-[#1b1c19] focus:outline-none focus:ring-2 focus:ring-[#00696b]"
+                    className="w-full px-3 py-2 rounded-none bg-white border-2 border-[#1b1c19] text-xs font-semibold text-[#1b1c19] focus:outline-none"
                   />
                 </div>
 
@@ -488,14 +477,14 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                     type="date"
                     value={toDate}
                     onChange={(e) => handleCustomDateChange('to', e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#f5f3ee] border border-[#bac9c9]/40 text-xs font-semibold text-[#1b1c19] focus:outline-none focus:ring-2 focus:ring-[#00696b]"
+                    className="w-full px-3 py-2 rounded-none bg-white border-2 border-[#1b1c19] text-xs font-semibold text-[#1b1c19] focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Calculated Summary Box */}
               {currentDurationInfo.days > 0 && (
-                <div className="p-3 bg-[#00ced1]/15 rounded-2xl border border-[#00ced1]/30 flex items-center justify-between">
+                <div className="p-3 bg-[#00ced1]/15 rounded-none border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="block text-[10px] font-bold text-[#005354] uppercase tracking-wider">
                       Calculated Schedule
@@ -504,7 +493,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                       {currentDurationInfo.formatted}
                     </span>
                   </div>
-                  <span className="text-xs font-black text-[#00696b] bg-white px-2.5 py-1 rounded-full shadow-2xs">
+                  <span className="text-xs font-black text-[#00696b] bg-white px-2.5 py-1 rounded-none border border-[#1b1c19]">
                     {currentDurationInfo.nights} Nights
                   </span>
                 </div>
@@ -515,7 +504,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                 <button
                   type="button"
                   onClick={handleApplyDates}
-                  className="w-full py-2.5 bg-[#00696b] hover:bg-[#005354] text-white font-headline font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
+                  className="neobrutal-btn-teal w-full py-2.5 text-xs font-headline font-black uppercase tracking-wider rounded-none flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>Confirm Travel Dates</span>
@@ -528,7 +517,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
 
       {/* Select Your Vibe */}
       <div className="mb-8">
-        <p className="text-xs font-bold tracking-wider text-[#3b4949] uppercase mb-3 ml-1">
+        <p className="text-xs font-headline font-black tracking-wider text-[#3b4949] uppercase mb-3 ml-1">
           Select your travel vibes ({formData.selectedVibes.length} selected)
         </p>
         <div className="flex flex-wrap gap-2.5">
@@ -538,14 +527,12 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
               <button
                 key={vibe}
                 type="button"
-                onClick={() => toggleVibe(vibe)}
-                className={`px-5 py-2.5 rounded-full border transition-all font-body text-base flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'border-[#00696b] bg-[#00696b] text-white font-medium shadow-xs scale-102'
-                    : 'border-[#bac9c9] bg-white/50 text-[#1b1c19] hover:border-[#00696b] hover:text-[#00696b]'
-                }`}
+                onClick={() => selectVibe(vibe)}
+                className={`px-5 py-2.5 rounded-none border-2 border-[#1b1c19] transition-all font-headline font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${isSelected
+                    ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                    : 'bg-white text-[#1b1c19] hover:bg-[#f5f3ee]'
+                  }`}
               >
-                {isSelected && <Check className="w-4 h-4 text-white" />}
                 <span>{vibe}</span>
               </button>
             );
@@ -554,7 +541,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
           <button
             type="button"
             onClick={() => setShowMoreVibes(!showMoreVibes)}
-            className="px-5 py-2.5 rounded-full border border-[#bac9c9] text-[#00696b] font-bold text-base hover:bg-[#00ced1]/10 transition-all flex items-center gap-1"
+            className="px-5 py-2.5 rounded-none border-2 border-[#1b1c19] text-[#00696b] font-headline font-black text-xs uppercase tracking-wider hover:bg-[#00ced1]/10 transition-all flex items-center gap-1 bg-white"
           >
             <span>{showMoreVibes ? 'Show Less' : '+ More Vibes'}</span>
           </button>
@@ -568,16 +555,77 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
               value={customVibeInput}
               onChange={(e) => setCustomVibeInput(e.target.value)}
               placeholder="Add custom vibe (e.g. Anime, Vintage Shops)"
-              className="flex-1 px-4 py-2 bg-white/80 border border-[#bac9c9] rounded-xl text-sm focus:outline-none focus:border-[#00696b]"
+              className="flex-1 px-4 py-2 bg-white border-2 border-[#1b1c19] text-sm font-medium text-[#1b1c19] placeholder:text-[#6b7a7a] rounded-none focus:outline-none"
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-[#00696b] text-white rounded-xl text-xs font-bold hover:bg-[#005354]"
+              className="px-4 py-2 bg-[#00696b] text-white rounded-none text-xs font-bold border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]"
             >
               Add
             </button>
           </form>
         )}
+      </div>
+
+      {/* Budget Level & Travel Pace Controls */}
+      <div className="space-y-6 mb-8 pt-4 border-t-2 border-[#1b1c19]/20">
+        {/* Budget Level */}
+        <div>
+          <label className="block text-xs font-headline font-black tracking-wider text-[#3b4949] uppercase mb-3 ml-1">
+            Budget Tier
+          </label>
+          <div className="flex flex-wrap gap-2.5">
+            {[
+              { id: 'Budget', label: 'Budget' },
+              { id: 'Mid-range', label: 'Mid-range' },
+              { id: 'Luxury', label: 'Luxury' },
+            ].map((item) => {
+              const active = (formData.budgetLevel || 'Mid-range') === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onChange({ ...formData, budgetLevel: item.id as any })}
+                  className={`px-5 py-2.5 rounded-none border-2 border-[#1b1c19] transition-all font-headline font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${active
+                      ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                      : 'bg-white text-[#1b1c19] hover:bg-[#f5f3ee]'
+                    }`}
+                >
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Travel Pace */}
+        <div>
+          <label className="block text-xs font-headline font-black tracking-wider text-[#3b4949] uppercase mb-3 ml-1">
+            Travel Pace
+          </label>
+          <div className="flex flex-wrap gap-2.5">
+            {[
+              { id: 'Relaxed', label: 'Relaxed' },
+              { id: 'Moderate', label: 'Moderate' },
+              { id: 'Fast-Paced', label: 'Fast-Paced' },
+            ].map((item) => {
+              const active = (formData.travelPace || 'Moderate') === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onChange({ ...formData, travelPace: item.id as any })}
+                  className={`px-5 py-2.5 rounded-none border-2 border-[#1b1c19] transition-all font-headline font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${active
+                      ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                      : 'bg-white text-[#1b1c19] hover:bg-[#f5f3ee]'
+                    }`}
+                >
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Generate Action Button */}
@@ -586,7 +634,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
           type="button"
           onClick={onSubmit}
           disabled={isLoading}
-          className="w-full md:w-auto bg-[#fe7e4f] hover:bg-[#a43c12] text-white px-10 py-4 rounded-2xl font-headline font-bold text-lg sm:text-xl flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+          className="neobrutal-btn-terracotta w-full md:w-auto px-10 py-4 font-headline font-black text-lg sm:text-xl flex items-center justify-center gap-3 rounded-none uppercase shadow-[4px_4px_0px_0px_#1b1c19] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

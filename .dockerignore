@@ -1,0 +1,28 @@
+# Dependencies (rebuilt inside Docker)
+node_modules/
+
+# Local environment secrets — NEVER bake into image
+.env
+.env.local
+.env.*.local
+
+# Git metadata
+.git/
+.gitignore
+
+# Build artifacts (builder stage handles this)
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor and OS artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test files
+*.test.ts
+*.spec.ts

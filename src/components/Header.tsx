@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { PlanzoLogo } from './PlanzoLogo';
 import {
   Calendar,
   CheckCircle2,
@@ -30,13 +31,31 @@ export const Header: React.FC<HeaderProps> = ({
   onSignOut,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isCalendarMenuOpen, setIsCalendarMenuOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const calendarMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on click outside
+  // Reset image error state when current user or photoURL changes
+  useEffect(() => {
+    setImgError(false);
+  }, [currentUser?.photoURL]);
+
+  // Compute user initial for fallback avatar badge
+  const userInitial = currentUser?.displayName
+    ? currentUser.displayName.charAt(0).toUpperCase()
+    : currentUser?.email
+      ? currentUser.email.charAt(0).toUpperCase()
+      : 'T';
+
+  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (calendarMenuRef.current && !calendarMenuRef.current.contains(event.target as Node)) {
+        setIsCalendarMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -48,245 +67,273 @@ export const Header: React.FC<HeaderProps> = ({
     setIsDropdownOpen(false);
   };
 
-  return (
-    <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 sm:px-8 lg:px-[120px] py-3 bg-[#fbf9f4]/85 backdrop-blur-xl border-b border-[#bac9c9]/30 shadow-xs transition-all">
-      {/* Brand & Nav */}
-      <div className="flex items-center gap-6 md:gap-10">
-        <button
-          onClick={() => handleNavClick('explore')}
-          className="text-2xl font-extrabold tracking-tight text-[#00696b] font-headline hover:opacity-90 transition-opacity flex items-center gap-2"
-        >
-          <span>Planzo AI</span>
-        </button>
+  const NAV_ITEMS = [
+    { id: 'explore', label: 'Explore' },
+    { id: 'my-trips', label: 'My Trips' },
+    { id: 'community', label: 'Community' },
+    { id: 'vibe-check', label: 'Vibe Check' },
+  ];
 
-        <nav className="hidden md:flex items-center gap-8 ml-4">
+  return (
+    <>
+      {/* Top Scroll Mask Shield */}
+      <div className="fixed top-0 left-0 w-full h-3 z-50 bg-[#fbf9f4] pointer-events-none transition-colors duration-300" />
+
+      <header className="fixed top-3 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[1400px] h-16 z-50 rounded-none bg-white border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] px-6 sm:px-8 transition-all duration-300 flex justify-between items-center text-[#1b1c19]">
+        {/* Brand & Nav */}
+        <div className="flex items-center gap-6 md:gap-10">
           <button
             onClick={() => handleNavClick('explore')}
-            className={`font-body text-base transition-colors py-1 ${
-              currentTab === 'explore'
-                ? 'text-[#00696b] border-b-2 border-[#00696b] font-bold'
-                : 'text-[#3b4949] hover:text-[#00696b]'
-            }`}
+            className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#00696b] font-headline hover:opacity-90 transition-opacity flex items-center gap-1.5 group"
           >
-            Explore
+            <PlanzoLogo className="w-8 h-8 sm:w-9 sm:h-9 transition-transform group-hover:scale-110 group-hover:-rotate-6" color="#00696b" />
+            <span>Planzo</span>
           </button>
-          <button
-            onClick={() => handleNavClick('my-trips')}
-            className={`font-body text-base transition-colors py-1 ${
-              currentTab === 'my-trips'
-                ? 'text-[#00696b] border-b-2 border-[#00696b] font-bold'
-                : 'text-[#3b4949] hover:text-[#00696b]'
-            }`}
-          >
-            My Trips
-          </button>
-          <button
-            onClick={() => handleNavClick('community')}
-            className={`font-body text-base transition-colors py-1 ${
-              currentTab === 'community'
-                ? 'text-[#00696b] border-b-2 border-[#00696b] font-bold'
-                : 'text-[#3b4949] hover:text-[#00696b]'
-            }`}
-          >
-            Community
-          </button>
-          <button
-            onClick={() => handleNavClick('vibe-check')}
-            className={`font-body text-base transition-colors py-1 ${
-              currentTab === 'vibe-check'
-                ? 'text-[#00696b] border-b-2 border-[#00696b] font-bold'
-                : 'text-[#3b4949] hover:text-[#00696b]'
-            }`}
-          >
-            Vibe Check
-          </button>
-        </nav>
-      </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-3 sm:gap-5">
-        <div className="hidden sm:flex flex-col items-end">
-          <button
-            onClick={onToggleCalendar}
-            className={`text-xs font-semibold tracking-wider flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${
-              isCalendarConnected
-                ? 'text-[#00696b] bg-[#00ced1]/15 hover:bg-[#00ced1]/25'
-                : 'text-[#6b7a7a] bg-black/5 hover:bg-black/10'
-            }`}
-            title="Toggle Google Calendar Sync"
-          >
-            <Calendar className="w-3.5 h-3.5 text-[#00696b]" />
-            <span>{isCalendarConnected ? 'Calendar Connected' : 'Connect Calendar'}</span>
-            {isCalendarConnected && <CheckCircle2 className="w-3.5 h-3.5 text-[#00696b] ml-0.5" />}
-          </button>
+          <nav className="hidden md:flex items-center gap-1 sm:gap-2 ml-2">
+            {NAV_ITEMS.map((item) => {
+              const isActive = currentTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`relative px-4 py-2 rounded-none font-headline text-xs sm:text-sm font-black uppercase tracking-wider transition-all duration-150 flex items-center gap-1.5 ${isActive
+                    ? 'bg-[#00696b] text-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]'
+                    : 'text-[#3b4949] border-2 border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
+                    }`}
+                >
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 bg-white animate-pulse shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* User Profile Avatar & Dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          {!currentUser ? (
-            <div className="flex items-center gap-2">
+        {/* Right Controls */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Calendar Connection Control & Popover */}
+          <div className="hidden sm:flex relative" ref={calendarMenuRef}>
+            <button
+              onClick={() => {
+                if (isCalendarConnected) {
+                  setIsCalendarMenuOpen(!isCalendarMenuOpen);
+                } else {
+                  onToggleCalendar();
+                }
+              }}
+              className={`text-xs font-headline font-black uppercase tracking-wider flex items-center gap-1.5 px-3.5 py-1.5 rounded-none border-2 border-[#1b1c19] transition-all ${isCalendarConnected
+                ? 'bg-[#00ced1]/20 text-[#00696b] shadow-[2px_2px_0px_0px_#00696b] hover:-translate-y-0.5'
+                : 'bg-white text-[#6b7a7a] shadow-[2px_2px_0px_0px_#1b1c19] hover:bg-[#f5f3ee]'
+                }`}
+              title="Manage Google Calendar Connection"
+            >
+              <Calendar className="w-3.5 h-3.5 text-[#00696b]" />
+              <span>{isCalendarConnected ? 'Calendar Connected' : 'Connect Calendar'}</span>
+              {isCalendarConnected && <CheckCircle2 className="w-3.5 h-3.5 text-[#00696b] ml-0.5" />}
+            </button>
+
+            {/* Calendar Popover Menu */}
+            {isCalendarMenuOpen && isCalendarConnected && (
+              <div className="absolute right-0 top-11 w-64 bg-white border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] p-3.5 space-y-3 z-50 animate-in fade-in zoom-in-95 duration-150 rounded-none">
+                <div className="flex items-center gap-2 border-b-2 border-[#1b1c19]/20 pb-2.5">
+                  <span className="w-2.5 h-2.5 bg-[#00ced1] border border-[#1b1c19] shrink-0" />
+                  <div>
+                    <p className="text-xs font-headline font-black text-[#1b1c19] uppercase tracking-wider">
+                      Google Calendar Active
+                    </p>
+                    <p className="text-[10px] text-[#6b7a7a] font-medium truncate">
+                      {sessionStorage.getItem('gcal_account_email') || currentUser?.email || 'Auto-Sync Active'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <a
+                    href="https://calendar.google.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setIsCalendarMenuOpen(false)}
+                    className="w-full text-left px-3 py-2 text-xs font-bold text-[#00696b] hover:bg-[#00ced1]/15 border border-transparent hover:border-[#1b1c19] transition-all flex items-center justify-between rounded-none"
+                  >
+                    <span>Open Google Calendar</span>
+                    <span>↗</span>
+                  </a>
+
+                  <button
+                    onClick={() => {
+                      setIsCalendarMenuOpen(false);
+                      onToggleCalendar();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 border border-transparent hover:border-[#1b1c19] transition-all flex items-center justify-between rounded-none"
+                  >
+                    <span>Disconnect Calendar</span>
+                    <span>✕</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Profile Avatar & Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            {!currentUser ? (
               <button
                 onClick={onSignIn}
-                className="bg-[#00696b] text-white px-4 sm:px-5 py-2 rounded-full font-semibold text-xs sm:text-sm hover:bg-[#005354] hover:scale-105 active:scale-95 transition-all shadow-sm"
+                className="bg-[#00696b] text-white px-4 sm:px-5 py-2 rounded-none font-headline font-black text-xs sm:text-sm uppercase tracking-wider border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#1b1c19] active:translate-x-0 active:translate-y-0 transition-all flex items-center gap-2"
               >
-                Sign in with Google
+                <UserIcon className="w-4 h-4" />
+                <span>Sign In</span>
               </button>
-
+            ) : (
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-10 h-10 rounded-full bg-[#eae8e3] border border-[#bac9c9]/50 flex items-center justify-center text-[#00696b] hover:bg-[#e2dfd7] transition-all"
-                title="Guest Menu"
+                className="flex items-center gap-2 p-1 rounded-none bg-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all focus:outline-none"
               >
-                <UserIcon className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2.5 p-1 rounded-full hover:bg-black/5 transition-all focus:outline-none"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#eae8e3] overflow-hidden border-2 border-[#00696b] shadow-xs flex items-center justify-center text-[#00696b] relative">
-                {currentUser.photoURL ? (
-                  <img
-                    src={currentUser.photoURL}
-                    alt={currentUser.displayName || 'User'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-5 h-5" />
-                )}
-              </div>
-              <span className="hidden lg:inline text-xs font-bold text-[#1b1c19] max-w-[120px] truncate">
-                {currentUser.displayName || currentUser.email?.split('@')[0] || 'Traveler'}
-              </span>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-[#6b7a7a] transition-transform duration-200 hidden sm:block ${
-                  isDropdownOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-          )}
-
-          {/* Profile Dropdown Popup */}
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-72 bg-white rounded-3xl shadow-xl border border-[#bac9c9]/40 p-3 z-50 animate-in slide-in-from-top-2 duration-200">
-              {/* User Header Summary inside Dropdown */}
-              <div
-                onClick={() => handleNavClick('profile')}
-                className="p-3 bg-[#f5f3ee] hover:bg-[#eae8e3] cursor-pointer rounded-2xl mb-2 flex items-center gap-3 transition-colors"
-              >
-                <div className="w-11 h-11 rounded-full bg-[#00696b] text-white flex items-center justify-center font-bold overflow-hidden shrink-0">
-                  {currentUser?.photoURL ? (
+                <div className="w-9 h-9 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] overflow-hidden flex items-center justify-center font-headline font-black text-sm relative">
+                  {currentUser.photoURL && !imgError ? (
                     <img
                       src={currentUser.photoURL}
-                      alt="Avatar"
+                      alt="User avatar"
+                      referrerPolicy="no-referrer"
+                      onError={() => setImgError(true)}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <UserIcon className="w-6 h-6" />
+                    <span>{userInitial}</span>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-headline font-bold text-sm text-[#1b1c19] truncate">
-                    {currentUser?.displayName || (currentUser ? 'Planzo Traveler' : 'Guest Explorer')}
-                  </h4>
-                  <p className="text-[11px] text-[#6b7a7a] truncate">
-                    {currentUser?.email || 'Click to view profile'}
-                  </p>
-                  <span className="inline-block text-[10px] font-extrabold text-[#00696b] bg-[#00ced1]/20 px-2 py-0.5 rounded-full mt-1">
-                    {currentUser ? 'Gold Explorer' : 'Guest Mode'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Navigation Items */}
-              <div className="space-y-0.5">
-                <button
-                  onClick={() => handleNavClick('profile')}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-3 transition-colors ${
-                    currentTab === 'profile'
-                      ? 'bg-[#00696b]/10 text-[#00696b] font-bold'
-                      : 'text-[#3b4949] hover:bg-[#f5f3ee]'
-                  }`}
-                >
-                  <UserIcon className="w-4 h-4 text-[#00696b]" />
-                  <span>My Profile & Preferences</span>
-                </button>
-
-                <button
-                  onClick={() => handleNavClick('my-trips')}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-3 transition-colors ${
-                    currentTab === 'my-trips'
-                      ? 'bg-[#00696b]/10 text-[#00696b] font-bold'
-                      : 'text-[#3b4949] hover:bg-[#f5f3ee]'
-                  }`}
-                >
-                  <Compass className="w-4 h-4 text-[#a43c12]" />
-                  <span>My Saved Trips</span>
-                </button>
-
-                <button
-                  onClick={() => handleNavClick('vibe-check')}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-3 transition-colors ${
-                    currentTab === 'vibe-check'
-                      ? 'bg-[#00696b]/10 text-[#00696b] font-bold'
-                      : 'text-[#3b4949] hover:bg-[#f5f3ee]'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-[#00696b]" />
-                  <span>Vibe Check Generator</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    onToggleCalendar();
-                  }}
-                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold text-[#3b4949] hover:bg-[#f5f3ee] flex items-center justify-between transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-4 h-4 text-[#00696b]" />
-                    <span>Google Calendar</span>
-                  </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isCalendarConnected ? 'bg-[#00ced1]/20 text-[#005354]' : 'bg-gray-200 text-gray-600'
+                <ChevronDown
+                  className={`w-4 h-4 text-[#1b1c19] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
                     }`}
+                />
+              </button>
+            )}
+
+            {/* Profile Dropdown Popup */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-3 w-72 bg-[#ffffff] rounded-none shadow-[4px_4px_0px_0px_#1b1c19] border-2 border-[#1b1c19] p-3 z-50 animate-in slide-in-from-top-2 duration-200 text-[#1b1c19]">
+                {/* User Header Summary inside Dropdown */}
+                <div
+                  onClick={() => handleNavClick('profile')}
+                  className="p-3 bg-[#f5f3ee] hover:bg-[#eae8e3] cursor-pointer rounded-none border-2 border-[#1b1c19] mb-2 flex items-center gap-3 transition-colors"
+                >
+                  <div className="w-11 h-11 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] flex items-center justify-center font-bold overflow-hidden shrink-0">
+                    {currentUser?.photoURL && !imgError ? (
+                      <img
+                        src={currentUser.photoURL}
+                        alt="Avatar"
+                        referrerPolicy="no-referrer"
+                        onError={() => setImgError(true)}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-headline font-extrabold text-base text-white">
+                        {userInitial}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-headline font-bold text-sm text-[#1b1c19] truncate">
+                      {currentUser?.displayName || (currentUser ? 'Planzo Traveler' : 'Guest Explorer')}
+                    </h4>
+                    <p className="text-[11px] text-[#6b7a7a] truncate">
+                      {currentUser?.email || 'Click to view profile'}
+                    </p>
+                    <span className="inline-block text-[10px] font-headline font-black uppercase text-[#00696b] bg-[#00ced1]/20 border border-[#00696b]/30 px-2 py-0.5 rounded-none mt-1">
+                      {currentUser ? 'Gold Explorer' : 'Guest Mode'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Navigation Items */}
+                <div className="space-y-1">
+                  <button
+                    onClick={() => handleNavClick('profile')}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold flex items-center gap-3 transition-colors border ${currentTab === 'profile'
+                      ? 'bg-[#00696b]/15 text-[#00696b] border-[#1b1c19]'
+                      : 'text-[#3b4949] border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
+                      }`}
                   >
-                    {isCalendarConnected ? 'ON' : 'OFF'}
-                  </span>
-                </button>
+                    <UserIcon className="w-4 h-4 text-[#00696b]" />
+                    <span>My Profile & Preferences</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavClick('my-trips')}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold flex items-center gap-3 transition-colors border ${currentTab === 'my-trips'
+                      ? 'bg-[#00696b]/15 text-[#00696b] border-[#1b1c19]'
+                      : 'text-[#3b4949] border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
+                      }`}
+                  >
+                    <Compass className="w-4 h-4 text-[#a43c12]" />
+                    <span>My Saved Trips</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNavClick('vibe-check')}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold flex items-center gap-3 transition-colors border ${currentTab === 'vibe-check'
+                      ? 'bg-[#00696b]/15 text-[#00696b] border-[#1b1c19]'
+                      : 'text-[#3b4949] border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
+                      }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-[#00696b]" />
+                    <span>Vibe Check Generator</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      onToggleCalendar();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold text-[#3b4949] border border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee] flex items-center justify-between transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-[#00696b]" />
+                      <span>Google Calendar</span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-none border border-[#1b1c19] ${isCalendarConnected ? 'bg-[#00ced1]/20 text-[#005354]' : 'bg-gray-200 text-gray-600'
+                        }`}
+                    >
+                      {isCalendarConnected ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="my-2 border-t-2 border-[#1b1c19]/20" />
+
+                {/* Sign In / Out */}
+                {currentUser ? (
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      onSignOut();
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold text-[#a43c12] border-2 border-[#1b1c19] bg-white shadow-[2px_2px_0px_0px_#ba1a1a] flex items-center gap-3 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4 text-[#a43c12]" />
+                    <span>Sign Out</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      onSignIn();
+                    }}
+                    className="w-full py-2.5 px-4 font-headline font-black uppercase text-xs rounded-none flex items-center justify-center gap-2 border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] transition-all"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    <span>Sign in with Google</span>
+                  </button>
+                )}
               </div>
-
-              <div className="my-2 border-t border-[#bac9c9]/30" />
-
-              {/* Sign In / Out */}
-              {currentUser ? (
-                <button
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    onSignOut();
-                  }}
-                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#a43c12] hover:bg-[#a43c12]/10 flex items-center gap-3 transition-colors"
-                >
-                  <LogOut className="w-4 h-4 text-[#a43c12]" />
-                  <span>Sign Out</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    onSignIn();
-                  }}
-                  className="w-full py-2.5 px-4 bg-[#00696b] hover:bg-[#005354] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs"
-                >
-                  <UserIcon className="w-4 h-4" />
-                  <span>Sign in with Google</span>
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };

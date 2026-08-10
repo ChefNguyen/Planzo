@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Itinerary, Activity } from '../types';
-import { MapPin, Calendar, Clock, Plus, Share2, Edit3, Trash2, ArrowLeft, ExternalLink, Check, Sparkles, Download } from 'lucide-react';
+import { MapPin, Calendar, ArrowLeft, ExternalLink, GripVertical } from 'lucide-react';
 import { GoogleMapView } from './GoogleMapView';
-import { createGoogleCalendarUrl, downloadItineraryIcs } from '../lib/googleCalendar';
+import { createGoogleCalendarUrl } from '../lib/googleCalendar';
+import { getPlacePhoto } from '../lib/photoUtils';
 
 interface ItineraryMapViewProps {
   itinerary: Itinerary;
@@ -21,85 +22,137 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
     itinerary.days[0]?.activities[0]?.id || null
   );
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newTime, setNewTime] = useState('02:00 PM - 03:30 PM');
-  const [newVibe, setNewVibe] = useState('Relaxed & Scenic');
-  const [newLocation, setNewLocation] = useState(itinerary.destination);
 
-  const currentDay = itinerary.days[selectedDayIndex] || itinerary.days[0];
+  const [draggedActIndex, setDraggedActIndex] = useState<number | null>(null);
+  const [dragOverActIndex, setDragOverActIndex] = useState<number | null>(null);
 
-  const handleAddActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
+  // Splitter Bar state & dragging logic
+  const [sidebarWidth, setSidebarWidth] = useState<number>(42); // Percentage (min 25%, max 65%)
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isDesktop, setIsDesktop] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
+  );
+  const containerRef = useRef<HTMLDivElement>(null);
 
-    const newAct: Activity = {
-      id: `act-new-${Date.now()}`,
-      title: newTitle,
-      time: newTime,
-      vibe: newVibe,
-      location: newLocation,
-      category: 'culture'
-    };
+  const handleReorderActivity = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || toIdx >= currentDay.activities.length) return;
+    const updatedActivities = [...currentDay.activities];
+    const [movedItem] = updatedActivities.splice(fromIdx, 1);
+    updatedActivities.splice(toIdx, 0, movedItem);
 
     const updatedDays = itinerary.days.map((day, idx) => {
       if (idx === selectedDayIndex) {
-        return {
-          ...day,
-          activities: [...day.activities, newAct]
-        };
+        return { ...day, activities: updatedActivities };
       }
       return day;
     });
 
-    const totalStops = updatedDays.reduce((acc, d) => acc + d.activities.length, 0);
-
     onUpdateItinerary({
       ...itinerary,
       days: updatedDays,
-      totalStops
     });
-
-    setNewTitle('');
-    setShowAddModal(false);
+    setDraggedActIndex(null);
+    setDragOverActIndex(null);
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Auto-scroll selected activity card into view in the left timeline panel
+  useEffect(() => {
+    if (selectedActivityId) {
+      const el = document.getElementById(`activity-card-${selectedActivityId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [selectedActivityId]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidthPx = e.clientX - containerRect.left;
+      const newWidthPercent = (newWidthPx / containerRect.width) * 100;
+      // Clamp between 25% and 65%
+      const clamped = Math.min(65, Math.max(25, newWidthPercent));
+      setSidebarWidth(clamped);
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
+
+  const currentDay = itinerary.days[selectedDayIndex] || itinerary.days[0];
+
   return (
-    <div className="w-full min-h-screen bg-[#fbf9f4] flex flex-col pt-20">
-      {/* Top Banner Control */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-[#bac9c9]/30 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-16 z-30 shadow-2xs">
-        <div className="flex items-center gap-3">
+    <div className="fixed inset-x-0 bottom-0 flex flex-col z-40 bg-[#fbf9f4] transition-colors duration-300" style={{ top: '76px' }}>
+      {/* Top Banner Control — Neobrutalist Travel Header */}
+      <div className="bg-white border-b-2 border-[#1b1c19] px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-[0px_3px_0px_0px_#00696b] z-10">
+        <div className="flex items-center gap-3.5 min-w-0">
           <button
             onClick={onBackToInput}
-            className="p-2 rounded-full hover:bg-black/5 text-[#3b4949] transition-colors flex items-center gap-1.5 text-xs font-bold"
+            className="px-3.5 py-1.5 bg-white text-[#00696b] border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19] hover:-translate-y-0.5 active:translate-y-0 text-xs font-headline font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all"
+            title="Quay lại tạo lịch trình mới"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>New Vibe Search</span>
+            <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+            <span>New Vibe</span>
           </button>
-          <div className="h-5 w-px bg-[#bac9c9]/50" />
-          <div>
-            <h2 className="font-headline font-extrabold text-lg sm:text-xl text-[#00696b]">
-              {itinerary.destination}
-            </h2>
-            <p className="text-xs text-[#6b7a7a]">
-              {itinerary.dates} • {itinerary.totalStops} Stops ({itinerary.activeHours} hrs)
-            </p>
+
+          <div className="h-6 w-px bg-[#1b1c19]/30 shrink-0" />
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-headline font-black text-lg sm:text-xl text-[#00696b] tracking-tight truncate">
+                {itinerary.destination}
+              </h2>
+              {itinerary.duration?.formatted && (
+                <span className="text-[11px] font-headline font-black uppercase tracking-wider text-[#a43c12] bg-[#a43c12]/15 border border-[#a43c12]/30 px-2.5 py-0.5 rounded-none shrink-0">
+                  {itinerary.duration.formatted}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-[#6b7a7a] mt-0.5 flex-wrap">
+              <span className="font-bold text-[#3b4949]">{itinerary.dates}</span>
+              <span>•</span>
+              <span className="font-black text-[#00696b]">{itinerary.totalStops} Stops</span>
+              <span>•</span>
+              <span>{itinerary.activeHours} hrs active/day</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => downloadItineraryIcs(itinerary)}
-            className="bg-white hover:bg-gray-50 text-[#00696b] border border-[#00696b]/30 px-3.5 py-2.5 rounded-full font-headline font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs hover:scale-102 transition-all"
-            title="Download .ics calendar file"
-          >
-            <Download className="w-4 h-4 text-[#00696b]" />
-            <span className="hidden sm:inline">Export Calendar (.ics)</span>
-          </button>
-
+        {/* Right Action Controls */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onOpenReviewModal}
-            className="bg-[#a43c12] hover:bg-[#fe7e4f] text-white px-5 py-2.5 rounded-full font-headline font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md hover:scale-102 active:scale-98 transition-all"
+            className="neobrutal-btn-terracotta px-5 py-2 font-headline font-black text-xs sm:text-sm flex items-center gap-2 transition-all rounded-none"
           >
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
               calendar_month
@@ -109,118 +162,241 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
         </div>
       </div>
 
-      {/* Main Split Layout: Sidebar & Interactive Map */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-[calc(100vh-140px)]">
+      {/* Main Split Layout: Sidebar & Interactive Map - fills remaining space */}
+      <div
+        ref={containerRef}
+        className="flex-1 flex flex-col lg:flex-row min-h-0 relative"
+        style={{ overflow: 'hidden' }}
+      >
         {/* Left Sidebar - Days & Activity List */}
-        <div className="w-full lg:w-[42%] bg-white/60 p-4 sm:p-6 border-r border-[#bac9c9]/30 flex flex-col overflow-y-auto space-y-6">
-          {/* Day Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-            {itinerary.days.map((day, idx) => (
-              <button
-                key={day.dayNumber}
-                onClick={() => {
-                  setSelectedDayIndex(idx);
-                  if (day.activities[0]) setSelectedActivityId(day.activities[0].id);
-                }}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 border ${
-                  selectedDayIndex === idx
-                    ? 'bg-[#00696b] text-white border-[#00696b] shadow-xs'
-                    : 'bg-white/80 text-[#3b4949] border-[#bac9c9]/40 hover:bg-white'
-                }`}
-              >
-                <span>Day {day.dayNumber}</span>
-                <span className="text-[10px] opacity-80">({day.activities.length})</span>
-              </button>
-            ))}
-          </div>
+        <div
+          className="w-full bg-white border-r-2 border-[#1b1c19] flex flex-col h-full overflow-hidden transition-all duration-75"
+          style={{ width: isDesktop ? `${sidebarWidth}%` : '100%' }}
+        >
+          {/* Pinned Top Header inside Left Sidebar */}
+          <div className="p-4 sm:p-5 pb-4 shrink-0 border-b-2 border-[#1b1c19] bg-[#fbf9f4] space-y-3 z-10">
+            {/* Day Tabs with vertical padding to prevent top/bottom clipping */}
+            <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-0.5 custom-scrollbar">
+              {itinerary.days.map((day, idx) => (
+                <button
+                  key={day.dayNumber}
+                  onClick={() => {
+                    setSelectedDayIndex(idx);
+                    if (day.activities[0]) setSelectedActivityId(day.activities[0].id);
+                  }}
+                  className={`px-4 py-2 font-headline font-black uppercase text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-2 border-2 rounded-none ${
+                    selectedDayIndex === idx
+                      ? 'bg-[#00696b] text-white border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]'
+                      : 'bg-white text-[#3b4949] border-[#1b1c19] hover:bg-[#f0eee6]'
+                  }`}
+                >
+                  <span>Day {day.dayNumber}</span>
+                  <span className="text-[10px] opacity-90">({day.activities.length})</span>
+                </button>
+              ))}
+            </div>
 
-          {/* Current Day Header */}
-          <div className="flex items-center justify-between bg-[#f5f3ee] p-4 rounded-2xl border border-[#bac9c9]/20">
-            <div>
-              <span className="text-xs font-bold text-[#00696b] uppercase tracking-wider">
-                Day {currentDay.dayNumber} Focus
-              </span>
-              <h3 className="font-headline font-bold text-lg text-[#1b1c19]">
+            {/* Current Day Title Banner — Hard Neobrutalism */}
+            <div className="bg-white p-3.5 sm:p-4 border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] rounded-none transition-all">
+              <h3 className="font-headline font-black text-base sm:text-lg text-[#1b1c19] leading-tight uppercase tracking-tight truncate">
                 {currentDay.title}
               </h3>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-3 py-1.5 bg-[#00ced1]/20 hover:bg-[#00ced1]/30 text-[#005354] rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Stop</span>
-            </button>
           </div>
 
-          {/* Activities Timeline */}
-          <div className="space-y-4">
-            {currentDay.activities.map((act, idx) => {
-              const isSelected = selectedActivityId === act.id;
-              return (
-                <div
-                  key={act.id}
-                  onClick={() => setSelectedActivityId(act.id)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
-                    isSelected
-                      ? 'bg-white border-[#00696b] shadow-md ring-2 ring-[#00ced1]/30'
-                      : 'bg-white/70 border-[#bac9c9]/30 hover:bg-white hover:border-[#00696b]/40'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="w-7 h-7 rounded-full bg-[#00ced1]/20 text-[#00696b] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#00696b] uppercase tracking-wider">
-                          {act.time}
-                        </span>
-                        <a
-                          href={createGoogleCalendarUrl(itinerary.destination, act, currentDay.dayNumber)}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1 text-[#6b7a7a] hover:text-[#00696b] transition-colors rounded hover:bg-black/5 flex items-center gap-1 text-[11px] font-medium"
-                          title="Add to Google Calendar"
-                        >
-                          <Calendar className="w-3.5 h-3.5 text-[#00696b]" />
-                          <span className="hidden sm:inline">Add to Cal</span>
-                        </a>
-                      </div>
-                      <h4 className="font-bold text-base text-[#1b1c19] mt-0.5">
-                        {act.title}
-                      </h4>
-                      <p className="text-xs text-[#3b4949] italic mt-1">
-                        "{act.vibe}"
-                      </p>
-                      {act.location && (
-                        <div className="flex items-center gap-1 text-[11px] text-[#6b7a7a] mt-2">
-                          <MapPin className="w-3 h-3 text-[#00696b]" />
-                          <span>{act.location}</span>
+          {/* Scrollable Activities Timeline */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-5 space-y-6 custom-scrollbar">
+            {/* Activities Vertical Stepper Timeline */}
+            <div className="relative pl-6 sm:pl-7 border-l-2 border-dashed border-[#00696b]/40 space-y-5 my-2 ml-3">
+              {currentDay.activities.map((act, idx) => {
+                const isSelected = selectedActivityId === act.id;
+                const isBeingDragged = draggedActIndex === idx;
+                const isDragOverTarget = dragOverActIndex === idx;
+                const gmapsUrl = act.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.title + ', ' + (act.location || itinerary.destination))}`;
+                const photoUrl = getPlacePhoto(act, itinerary.destination);
+
+                return (
+                  <div
+                    key={act.id}
+                    id={`activity-card-${act.id}`}
+                    className="relative group/card"
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggedActIndex(idx);
+                      e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setData('text/plain', String(idx));
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                      if (dragOverActIndex !== idx) setDragOverActIndex(idx);
+                    }}
+                    onDragLeave={() => {
+                      if (dragOverActIndex === idx) setDragOverActIndex(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedActIndex !== null && draggedActIndex !== idx) {
+                        handleReorderActivity(draggedActIndex, idx);
+                      } else {
+                        setDragOverActIndex(null);
+                      }
+                    }}
+                    onDragEnd={() => {
+                      setDraggedActIndex(null);
+                      setDragOverActIndex(null);
+                    }}
+                  >
+                    {/* Stepper Node Icon on Vertical Dashed Line */}
+                    <div
+                      onClick={() => setSelectedActivityId(act.id)}
+                      className={`absolute -left-[37px] sm:-left-[41px] top-3 w-8 h-8 rounded-none flex items-center justify-center font-headline font-black text-xs cursor-pointer transition-all duration-200 z-10 border-2 border-[#1b1c19] ${isSelected
+                        ? 'bg-[#a43c12] text-white shadow-[3px_3px_0px_0px_#1b1c19] scale-110'
+                        : 'bg-white text-[#00696b] shadow-[2px_2px_0px_0px_#1b1c19] hover:scale-105'
+                        }`}
+                    >
+                      <span>{idx + 1}</span>
+                    </div>
+
+                    {/* Boarding-Pass Activity Card with Square Thumbnail & Drag Handle */}
+                    <div
+                      onClick={() => setSelectedActivityId(act.id)}
+                      className={`p-3.5 rounded-none border-2 transition-all cursor-pointer bg-white text-[#1b1c19] relative ${isBeingDragged ? 'opacity-40 border-dashed border-[#00696b]' : ''
+                        } ${isDragOverTarget ? 'border-[#00ced1] shadow-[5px_5px_0px_0px_#00ced1] scale-[1.01]' : ''
+                        } ${isSelected
+                          ? 'border-[#00696b] shadow-[4px_4px_0px_0px_#00696b] -translate-y-0.5'
+                          : 'border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] hover:shadow-[5px_5px_0px_0px_#1b1c19] hover:-translate-y-0.5'
+                        }`}
+                    >
+                      <div className="flex flex-col sm:flex-row items-start gap-3.5">
+                        {/* Compact Square Image Banner */}
+                        <div className="w-full sm:w-24 h-28 sm:h-24 rounded-none overflow-hidden shrink-0 bg-[#f0eee6] relative border-2 border-[#1b1c19] group">
+                          <img
+                            src={photoUrl}
+                            alt={act.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <span className="absolute bottom-1 right-1 bg-[#1b1c19] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-none border border-white/20">
+                            Pexels
+                          </span>
                         </div>
-                      )}
+
+                        {/* Content Details */}
+                        <div className="flex-1 min-w-0 w-full">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-headline font-black text-[#00696b] uppercase tracking-wider bg-[#00ced1]/20 border border-[#00696b]/30 px-2.5 py-0.5 rounded-none">
+                              {act.time}
+                            </span>
+
+                            {/* Action Buttons: Drag Handle & Add to Cal */}
+                            <div className="flex items-center gap-1.5">
+                              {/* Drag Handle for Mouse Reordering */}
+                              <span
+                                className="p-1.5 text-[#a0afaf] hover:text-[#00696b] cursor-grab active:cursor-grabbing transition-colors"
+                                title="Kéo để đổi thứ tự địa điểm"
+                              >
+                                <GripVertical className="w-4 h-4" />
+                              </span>
+
+                              <a
+                                href={createGoogleCalendarUrl(itinerary.destination, act, currentDay.dayNumber)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1.5 text-[#00696b] bg-white border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center gap-1 text-[11px] font-headline font-black uppercase ml-1"
+                                title="Add to Google Calendar"
+                              >
+                                <Calendar className="w-3.5 h-3.5 text-[#00696b]" />
+                                <span className="hidden sm:inline">Add to Cal</span>
+                              </a>
+                            </div>
+                          </div>
+
+                          <h4 className="font-bold text-base text-[#1b1c19] mt-1 leading-snug">
+                            {act.title}
+                          </h4>
+
+                          {/* Rating & Reviews */}
+                          {(act.rating || act.userRatingsTotal) && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {act.rating && (
+                                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-[#a43c12]">
+                                  <span className="text-amber-500">★</span> {act.rating.toFixed(1)}
+                                </span>
+                              )}
+                              {act.userRatingsTotal && (
+                                <span className="text-[11px] text-[#6b7a7a]">
+                                  ({act.userRatingsTotal.toLocaleString()} reviews)
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          <p className="text-xs text-[#3b4949] italic mt-1 line-clamp-2">
+                            "{act.vibe}"
+                          </p>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 mt-2 border-t pt-2 border-[#1b1c19]/15">
+                            {act.location ? (
+                              <div className="flex items-center gap-1 text-[11px] text-[#6b7a7a]">
+                                <MapPin className="w-3 h-3 text-[#00696b] shrink-0" />
+                                <span className="truncate max-w-[140px]">{act.location}</span>
+                              </div>
+                            ) : <div />}
+
+                            {/* Google Maps Link */}
+                            <a
+                              href={gmapsUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] font-headline font-black uppercase text-[#00696b] hover:underline ml-auto"
+                            >
+                              <span>View on Google Maps</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Sleek Vertical Resizable Splitter Bar (Desktop Only) */}
+        <div
+          onMouseDown={handleMouseDown}
+          onDoubleClick={() => setSidebarWidth(42)}
+          className={`hidden lg:flex w-2.5 hover:w-3.5 bg-[#f5f3ee] hover:bg-[#00ced1]/20 border-x border-[#1b1c19]/30 items-center justify-center cursor-col-resize z-20 group transition-all duration-150 relative shrink-0 ${isDragging ? 'bg-[#00ced1]/30 border-[#00696b]' : ''
+            }`}
+          title="Kéo để thay đổi kích thước Left Panel & Map View (Double-click để reset)"
+        >
+          {/* Central Grip Handle Pill */}
+          <div className={`w-5 h-10 rounded-none bg-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] flex flex-col items-center justify-center transition-all group-hover:scale-110 ${isDragging ? 'bg-[#00696b] text-white border-[#1b1c19] scale-110' : 'text-[#6b7a7a] group-hover:text-[#00696b]'
+            }`}>
+            <GripVertical className="w-3 h-3 stroke-[2.5]" />
           </div>
         </div>
 
         {/* Right Canvas - Interactive Google Map Visualizer */}
-        <div className="w-full lg:w-[58%] relative p-4 lg:p-6 bg-[#f5f3ee] flex flex-col">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-xs font-extrabold text-[#00696b] uppercase tracking-widest flex items-center gap-1.5">
+        <div
+          className="w-full flex-1 relative p-4 lg:p-6 bg-[#f5f3ee] flex flex-col transition-all duration-75"
+          style={{ height: '100%', overflow: 'hidden' }}
+        >
+          <div className="flex items-center justify-between mb-3 px-1 shrink-0">
+            <span className="text-xs font-headline font-black text-[#00696b] uppercase tracking-widest flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-[#a43c12]" />
-              <span>Google Maps • {itinerary.destination} (Day {currentDay.dayNumber})</span>
+              <span>Map • {itinerary.destination} (Day {currentDay.dayNumber})</span>
             </span>
             <span className="text-[11px] text-[#6b7a7a] font-medium">
               Click pins to inspect vibes & locations
             </span>
           </div>
 
-          <div className="flex-1 min-h-[450px] w-full">
+          <div className="flex-1 min-h-0 w-full relative">
             <GoogleMapView
               destination={itinerary.destination}
               activities={currentDay.activities}
@@ -230,65 +406,6 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Modal for Adding New Activity */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="font-headline font-bold text-lg text-[#00696b]">
-              Add Stop to Day {currentDay.dayNumber}
-            </h3>
-            <form onSubmit={handleAddActivity} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#3b4949]">Stop Title</label>
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Gion Teahouse Experience"
-                  required
-                  className="w-full p-2.5 border rounded-xl text-sm focus:border-[#00696b] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#3b4949]">Time Slot</label>
-                <input
-                  type="text"
-                  value={newTime}
-                  onChange={(e) => setNewTime(e.target.value)}
-                  placeholder="e.g. 02:00 PM - 03:30 PM"
-                  className="w-full p-2.5 border rounded-xl text-sm focus:border-[#00696b] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#3b4949]">Vibe Note</label>
-                <input
-                  type="text"
-                  value={newVibe}
-                  onChange={(e) => setNewVibe(e.target.value)}
-                  placeholder="e.g. Relaxing & Traditional tea ceremony"
-                  className="w-full p-2.5 border rounded-xl text-sm focus:border-[#00696b] focus:outline-none"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border rounded-xl text-xs font-bold text-[#3b4949]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#00696b] text-white rounded-xl text-xs font-bold hover:bg-[#005354]"
-                >
-                  Add Stop
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,7 +1,17 @@
 import { Itinerary, Activity } from '../types';
 
+function formatDateToIcsString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
 /**
- * Generates a Google Calendar event creation URL for a given activity.
+ * Generates a Google Calendar event creation URL for a single given activity.
  */
 export function createGoogleCalendarUrl(
   destination: string,
@@ -15,7 +25,6 @@ export function createGoogleCalendarUrl(
   );
   const location = encodeURIComponent(activity.location || destination);
 
-  // Default date handling: starting tomorrow or given base date
   const startDate = baseStartDate ? new Date(baseStartDate) : new Date();
   if (!baseStartDate) {
     startDate.setDate(startDate.getDate() + dayNumber);
@@ -23,37 +32,55 @@ export function createGoogleCalendarUrl(
     startDate.setDate(startDate.getDate() + (dayNumber - 1));
   }
 
-  // Parse time if possible (e.g., "09:00 AM - 11:30 AM")
   let startHour = 9;
+  let startMin = 0;
   let endHour = 11;
+  let endMin = 0;
 
   if (activity.time) {
-    const match = activity.time.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
-    if (match) {
-      let h = parseInt(match[1], 10);
-      const isPM = match[3].toUpperCase() === 'PM';
+    const times = activity.time.split(/\s*-\s*/);
+    const startMatch = times[0]?.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+    if (startMatch) {
+      let h = parseInt(startMatch[1], 10);
+      const m = startMatch[2] ? parseInt(startMatch[2], 10) : 0;
+      const isPM = startMatch[3].toUpperCase() === 'PM';
       if (isPM && h < 12) h += 12;
       if (!isPM && h === 12) h = 0;
       startHour = h;
+      startMin = m;
       endHour = h + 2;
+      endMin = m;
+    }
+    if (times[1]) {
+      const endMatch = times[1].match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+      if (endMatch) {
+        let h = parseInt(endMatch[1], 10);
+        const m = endMatch[2] ? parseInt(endMatch[2], 10) : 0;
+        const isPM = endMatch[3].toUpperCase() === 'PM';
+        if (isPM && h < 12) h += 12;
+        if (!isPM && h === 12) h = 0;
+        endHour = h;
+        endMin = m;
+      }
     }
   }
 
-  const startIso = new Date(startDate.setHours(startHour, 0, 0, 0))
-    .toISOString()
-    .replace(/-|:|\.\d\d\d/g, '');
-  const endIso = new Date(startDate.setHours(endHour, 0, 0, 0))
-    .toISOString()
-    .replace(/-|:|\.\d\d\d/g, '');
+  const dtStartObj = new Date(startDate);
+  dtStartObj.setHours(startHour, startMin, 0, 0);
+  const dtEndObj = new Date(startDate);
+  dtEndObj.setHours(endHour, endMin, 0, 0);
+
+  const startIso = formatDateToIcsString(dtStartObj);
+  const endIso = formatDateToIcsString(dtEndObj);
 
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${startIso}/${endIso}`;
 }
 
 /**
- * Generates an .ics file string for the entire itinerary and triggers download.
+ * Generates an .ics file string for the ENTIRE itinerary (all days, all activities) and triggers download.
  */
 export function downloadItineraryIcs(itinerary: Itinerary): void {
-  const now = new Date().toISOString().replace(/-|:|\.\d\d\d/g, '');
+  const now = formatDateToIcsString(new Date());
   let icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -67,31 +94,51 @@ export function downloadItineraryIcs(itinerary: Itinerary): void {
   baseDate.setDate(baseDate.getDate() + 1); // Start tomorrow
 
   itinerary.days.forEach((day) => {
-    const dayDate = new Date(baseDate);
-    dayDate.setDate(dayDate.getDate() + (day.dayNumber - 1));
-
     day.activities.forEach((act, idx) => {
+      const actDate = new Date(baseDate);
+      actDate.setDate(actDate.getDate() + (day.dayNumber - 1));
+
       let startH = 9 + idx * 2;
+      let startM = 0;
       let endH = startH + 1;
+      let endM = 0;
 
       if (act.time) {
-        const match = act.time.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
-        if (match) {
-          let h = parseInt(match[1], 10);
-          const isPM = match[3].toUpperCase() === 'PM';
+        const times = act.time.split(/\s*-\s*/);
+        const startMatch = times[0]?.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+        if (startMatch) {
+          let h = parseInt(startMatch[1], 10);
+          const m = startMatch[2] ? parseInt(startMatch[2], 10) : 0;
+          const isPM = startMatch[3].toUpperCase() === 'PM';
           if (isPM && h < 12) h += 12;
           if (!isPM && h === 12) h = 0;
           startH = h;
+          startM = m;
           endH = h + 1;
+          endM = m;
+        }
+        if (times[1]) {
+          const endMatch = times[1].match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+          if (endMatch) {
+            let h = parseInt(endMatch[1], 10);
+            const m = endMatch[2] ? parseInt(endMatch[2], 10) : 0;
+            const isPM = endMatch[3].toUpperCase() === 'PM';
+            if (isPM && h < 12) h += 12;
+            if (!isPM && h === 12) h = 0;
+            endH = h;
+            endM = m;
+          }
         }
       }
 
-      const dtStart = new Date(dayDate.setHours(startH, 0, 0, 0))
-        .toISOString()
-        .replace(/-|:|\.\d\d\d/g, '');
-      const dtEnd = new Date(dayDate.setHours(endH, 0, 0, 0))
-        .toISOString()
-        .replace(/-|:|\.\d\d\d/g, '');
+      const dtStartObj = new Date(actDate);
+      dtStartObj.setHours(startH, startM, 0, 0);
+
+      const dtEndObj = new Date(actDate);
+      dtEndObj.setHours(endH, endM, 0, 0);
+
+      const dtStart = formatDateToIcsString(dtStartObj);
+      const dtEnd = formatDateToIcsString(dtEndObj);
 
       icsContent.push(
         'BEGIN:VEVENT',
@@ -120,3 +167,114 @@ export function downloadItineraryIcs(itinerary: Itinerary): void {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 }
+
+/**
+ * Syncs the ENTIRE itinerary to Google Calendar by downloading the .ics file
+ * and opening the Google Calendar Import page (Fallback).
+ */
+export function syncAllToGoogleCalendar(itinerary: Itinerary): void {
+  downloadItineraryIcs(itinerary);
+  window.open('https://calendar.google.com/calendar/r/settings/export', '_blank');
+}
+
+/**
+ * Directly pushes ALL events in the itinerary into the user's Google Calendar via Google Calendar REST API.
+ */
+export async function syncItineraryToGoogleCalendarApi(
+  itinerary: Itinerary,
+  accessToken: string
+): Promise<{ success: boolean; count: number; error?: string }> {
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() + 1); // Start tomorrow
+
+  let syncedCount = 0;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh';
+
+  try {
+    for (const day of itinerary.days) {
+      const dayDate = new Date(baseDate);
+      dayDate.setDate(dayDate.getDate() + (day.dayNumber - 1));
+
+      for (let idx = 0; idx < day.activities.length; idx++) {
+        const act = day.activities[idx];
+        let startH = 9 + idx * 2;
+        let startM = 0;
+        let endH = startH + 1;
+        let endM = 0;
+
+        if (act.time) {
+          const times = act.time.split(/\s*-\s*/);
+          const startMatch = times[0]?.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+          if (startMatch) {
+            let h = parseInt(startMatch[1], 10);
+            const m = startMatch[2] ? parseInt(startMatch[2], 10) : 0;
+            const isPM = startMatch[3].toUpperCase() === 'PM';
+            if (isPM && h < 12) h += 12;
+            if (!isPM && h === 12) h = 0;
+            startH = h;
+            startM = m;
+            endH = h + 1;
+            endM = m;
+          }
+          if (times[1]) {
+            const endMatch = times[1].match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+            if (endMatch) {
+              let h = parseInt(endMatch[1], 10);
+              const m = endMatch[2] ? parseInt(endMatch[2], 10) : 0;
+              const isPM = endMatch[3].toUpperCase() === 'PM';
+              if (isPM && h < 12) h += 12;
+              if (!isPM && h === 12) h = 0;
+              endH = h;
+              endM = m;
+            }
+          }
+        }
+
+        const dtStartObj = new Date(dayDate);
+        dtStartObj.setHours(startH, startM, 0, 0);
+
+        const dtEndObj = new Date(dayDate);
+        dtEndObj.setHours(endH, endM, 0, 0);
+
+        const eventPayload = {
+          summary: `[Planzo] ${act.title} (${itinerary.destination})`,
+          description: `Day ${day.dayNumber} Activity in ${itinerary.destination}\nVibe: ${act.vibe}\nTime: ${act.time}\n\nGenerated with Planzo AI Travel Planner`,
+          location: act.location || itinerary.destination,
+          start: {
+            dateTime: dtStartObj.toISOString(),
+            timeZone,
+          },
+          end: {
+            dateTime: dtEndObj.toISOString(),
+            timeZone,
+          },
+        };
+
+        const res = await fetch(
+          'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(eventPayload),
+          }
+        );
+
+        if (res.ok) {
+          syncedCount++;
+        } else {
+          console.warn('GCal API sync event warning:', await res.text());
+        }
+      }
+    }
+
+    return { success: true, count: syncedCount };
+  } catch (err: any) {
+    console.error('Google Calendar API batch sync error:', err);
+    return { success: false, count: syncedCount, error: err.message };
+  }
+}
+
+

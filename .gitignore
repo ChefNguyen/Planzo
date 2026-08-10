@@ -3,6 +3,16 @@ build/
 dist/
 coverage/
 .DS_Store
+Thumbs.db
 *.log
+
+# Environment secrets — never commit
 .env*
 !.env.example
+
+# Local Firebase config with real keys (keep .env.example only)
+# firebase-applet-config.json  # Uncomment if repo is public
+
+# Editor artifacts
+.vscode/
+.idea/

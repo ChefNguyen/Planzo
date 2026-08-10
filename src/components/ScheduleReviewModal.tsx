@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Itinerary, Activity } from '../types';
-import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink } from 'lucide-react';
-import { downloadItineraryIcs, createGoogleCalendarUrl } from '../lib/googleCalendar';
+import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
+import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi } from '../lib/googleCalendar';
+import { exportItineraryToPdf } from '../lib/exportPdf';
+import { signInWithGoogle, connectGoogleCalendarAccount, auth } from '../lib/firebase';
 
 interface ScheduleReviewModalProps {
   itinerary: Itinerary;
@@ -17,6 +19,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
   onUpdateItinerary,
 }) => {
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'synced'>('idle');
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editTime, setEditTime] = useState('');
@@ -24,12 +27,56 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
   const handleSyncClick = () => {
     setSyncState('syncing');
-    // Download .ics file
+    setSyncNotice(null);
     downloadItineraryIcs(itinerary);
     setTimeout(() => {
       setSyncState('synced');
+      setSyncNotice(`Đã tải file .ics chứa toàn bộ ${itinerary.totalStops} điểm dừng trong chuyến đi!`);
       onConfirmSync();
-    }, 1000);
+    }, 800);
+  };
+
+  const handleGoogleCalendarSync = async () => {
+    setSyncState('syncing');
+    setSyncNotice(null);
+
+    let token = sessionStorage.getItem('gcal_access_token');
+    let gcalEmail = sessionStorage.getItem('gcal_account_email');
+
+    if (!token) {
+      // 1. If not signed in to web app, must login first!
+      if (!auth.currentUser) {
+        const user = await signInWithGoogle();
+        if (!user) {
+          setSyncState('idle');
+          return;
+        }
+      }
+
+      // 2. Logged in -> OAuth connect for Calendar (account select prompt)
+      const res = await connectGoogleCalendarAccount();
+      token = res?.accessToken || sessionStorage.getItem('gcal_access_token');
+      gcalEmail = res?.email || sessionStorage.getItem('gcal_account_email') || '';
+    }
+
+    if (token) {
+      const apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
+      if (apiResult.success && apiResult.count > 0) {
+        setSyncState('synced');
+        setSyncNotice(`Đã tự động tạo trực tiếp ${apiResult.count} lịch trình vào Google Calendar (${gcalEmail || 'Tài khoản đã chọn'})!`);
+        window.open('https://calendar.google.com/calendar/r', '_blank');
+        onConfirmSync();
+        return;
+      }
+    }
+
+    // Fallback if API token is missing or denied
+    syncAllToGoogleCalendar(itinerary);
+    setTimeout(() => {
+      setSyncState('synced');
+      setSyncNotice(`Đã tạo file .ics và mở Google Calendar Import. Hãy kéo thả file vào lịch của bạn!`);
+      onConfirmSync();
+    }, 800);
   };
 
   const handleDeleteActivity = (dayIndex: number, activityId: string) => {
@@ -84,57 +131,77 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/30 backdrop-blur-[6px] animate-in fade-in duration-200">
-      <div className="glass-panel w-full max-w-5xl max-h-[90vh] flex flex-col rounded-[2.5rem] shadow-2xl overflow-hidden relative">
-        {/* Close Modal Button */}
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+      <div className="bg-white rounded-none max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden relative border-2 border-[#1b1c19] shadow-[6px_6px_0px_0px_#00696b] animate-in zoom-in-95 duration-200">
+        
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full bg-white/60 hover:bg-white text-[#3b4949] transition-all z-10"
+          className="absolute top-5 right-5 sm:top-6 sm:right-6 p-2 rounded-none bg-white border-2 border-[#1b1c19] text-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all z-20"
           title="Close review"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Visual Header */}
-        <div className="relative pt-8 pb-4 px-6 flex flex-col items-center border-b border-[#bac9c9]/20">
-          {/* Centered Schedule Icon Card */}
-          <div className="relative w-20 h-24 bg-white rounded-xl shadow-md border border-[#bac9c9]/30 flex flex-col items-center overflow-hidden mb-3">
-            <div className="w-full h-6 bg-[#00ced1]/40" />
-            <div className="mt-3 flex flex-col items-center gap-1">
-              <div className="w-8 h-1 bg-[#bac9c9]/50 rounded-full" />
-              <div className="w-10 h-1 bg-[#bac9c9]/50 rounded-full" />
-              <div className="w-6 h-1 bg-[#bac9c9]/50 rounded-full" />
-            </div>
-            <span
-              className="material-symbols-outlined text-[#00696b] mt-2 text-3xl"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              calendar_today
+        {/* Modal Header */}
+        <div className="relative pt-7 pb-4 px-6 sm:px-10 flex flex-col items-center border-b-2 border-[#1b1c19] bg-[#fbf9f4]">
+          {/* Neobrutalist Hero Icon Card */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#00696b] border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] rounded-none flex items-center justify-center mb-3 text-white">
+            <span className="material-symbols-outlined text-3xl sm:text-4xl">
+              event_available
             </span>
           </div>
 
-          <h2 className="font-headline text-2xl sm:text-3xl font-extrabold text-[#1b1c19] text-center">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-3 py-0.5 rounded-none bg-[#00ced1]/15 text-[#00696b] font-headline font-black text-[11px] uppercase tracking-wider flex items-center gap-1 border border-[#00696b]/30">
+              <Sparkles className="w-3 h-3" /> Ready to Sync
+            </span>
+          </div>
+
+          <h2 className="font-headline text-2xl sm:text-3xl font-extrabold text-[#1b1c19] text-center tracking-tight">
             Review Your Schedule
           </h2>
+          <p className="text-xs sm:text-sm text-[#5f6e6e] mt-1 text-center font-medium flex items-center justify-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-[#00696b]" />
+            <span className="font-bold text-[#00696b]">{itinerary.destination}</span> • {itinerary.days.length} Days • {itinerary.totalStops} Stops
+          </p>
+
+          {/* Sync Notice Alert Banner */}
+          {syncNotice && (
+            <div className="mt-3 px-4 py-2.5 bg-[#00696b]/10 border-2 border-[#1b1c19] rounded-none text-xs text-[#00696b] text-center font-semibold max-w-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <CheckCircle className="w-4 h-4 shrink-0 text-[#00696b]" />
+              <span>{syncNotice}</span>
+            </div>
+          )}
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-6">
+        {/* Scrollable Content Body */}
+        <div className="flex-1 overflow-y-auto px-5 sm:px-10 py-6 scrollbar-thin">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column: Destinations List */}
-            <div className="lg:col-span-8 space-y-8">
+            
+            {/* Left Column: Days Timeline */}
+            <div className="lg:col-span-8 space-y-7">
               {itinerary.days.map((day, dayIdx) => (
-                <div key={day.dayNumber}>
-                  <h4 className="font-headline text-xl font-bold text-[#00696b] mb-4 flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-full bg-[#00ced1] text-[#005354] flex items-center justify-center font-bold text-sm">
-                      {String(day.dayNumber).padStart(2, '0')}
-                    </span>
-                    <span>
-                      Day {day.dayNumber}: {day.title}
-                    </span>
-                  </h4>
+                <div key={day.dayNumber} className="relative">
+                  {/* Day Header Badge */}
+                  <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center justify-center font-headline font-black text-sm">
+                        {String(day.dayNumber).padStart(2, '0')}
+                      </div>
+                      <div>
+                        <h4 className="font-headline text-lg sm:text-xl font-bold text-[#1b1c19] leading-snug">
+                          Day {day.dayNumber}: {day.title}
+                        </h4>
+                        <span className="text-[11px] text-[#6b7a7a] font-medium">
+                          {day.activities.length} stops planned
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-                  <div className="space-y-3.5">
+                  {/* Day Activities List */}
+                  <div className="space-y-3.5 pl-3 sm:pl-4 border-l-2 border-dashed border-[#1b1c19]/30 ml-4">
                     {day.activities.map((act) => {
                       const isEditing = editingActivity?.id === act.id;
 
@@ -142,39 +209,45 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                         return (
                           <div
                             key={act.id}
-                            className="bg-white p-4 rounded-xl border-2 border-[#00ced1] space-y-3 shadow-md"
+                            className="bg-white p-4.5 rounded-none border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#00ced1] space-y-3 animate-in fade-in"
                           >
-                            <input
-                              type="text"
-                              value={editTime}
-                              onChange={(e) => setEditTime(e.target.value)}
-                              placeholder="Time (e.g. 09:00 AM - 11:30 AM)"
-                              className="w-full text-xs font-bold text-[#00696b] border border-[#bac9c9] rounded p-1.5"
-                            />
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-[#00696b]" />
+                              <input
+                                type="text"
+                                value={editTime}
+                                onChange={(e) => setEditTime(e.target.value)}
+                                placeholder="Time (e.g. 09:00 AM - 11:30 AM)"
+                                className="w-full text-xs font-bold text-[#00696b] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none"
+                              />
+                            </div>
+
                             <input
                               type="text"
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
                               placeholder="Activity Title"
-                              className="w-full font-bold text-base text-[#1b1c19] border border-[#bac9c9] rounded p-1.5"
+                              className="w-full font-bold text-base text-[#1b1c19] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none"
                             />
+
                             <input
                               type="text"
                               value={editVibe}
                               onChange={(e) => setEditVibe(e.target.value)}
                               placeholder="Vibe note..."
-                              className="w-full text-xs italic text-[#3b4949] border border-[#bac9c9] rounded p-1.5"
+                              className="w-full text-xs italic text-[#3b4949] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none"
                             />
+
                             <div className="flex justify-end gap-2 pt-1">
                               <button
                                 onClick={() => setEditingActivity(null)}
-                                className="px-3 py-1 text-xs text-[#6b7a7a] border rounded hover:bg-gray-100"
+                                className="px-3.5 py-1.5 text-xs text-[#6b7a7a] border-2 border-[#1b1c19] rounded-none bg-white font-semibold"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={() => handleSaveEdit(dayIdx)}
-                                className="px-3 py-1 text-xs bg-[#00696b] text-white rounded font-bold"
+                                className="neobrutal-btn-teal px-4 py-1.5 text-xs rounded-none font-bold shadow-[2px_2px_0px_0px_#1b1c19]"
                               >
                                 Save Changes
                               </button>
@@ -186,34 +259,52 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                       return (
                         <div
                           key={act.id}
-                          className="bg-white/70 p-4 rounded-xl border border-[#bac9c9]/30 flex justify-between items-center shadow-2xs lift-hover"
+                          className="group relative bg-white p-4 rounded-none border-2 border-[#1b1c19] flex justify-between items-center shadow-[2px_2px_0px_0px_#1b1c19] transition-all duration-200"
                         >
-                          <div className="flex flex-col gap-1 pr-2">
-                            <span className="text-[11px] font-bold text-[#00696b] uppercase tracking-wider">
-                              {act.time}
-                            </span>
-                            <h3 className="font-bold text-base sm:text-lg text-[#1b1c19]">
+                          <div className="flex flex-col gap-1 pr-3">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2.5 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide">
+                                {act.time}
+                              </span>
+                            </div>
+
+                            <h3 className="font-bold text-base sm:text-lg text-[#1b1c19] leading-snug mt-0.5">
                               {act.title}
                             </h3>
-                            <p className="text-xs sm:text-sm text-[#3b4949] italic">
-                              "{act.vibe}"
-                            </p>
+
+                            {act.vibe && (
+                              <p className="text-xs text-[#5f6e6e] italic">
+                                "{act.vibe}"
+                              </p>
+                            )}
                           </div>
 
-                          <div className="flex items-center gap-1 shrink-0">
+                          {/* Item Quick Action Icons */}
+                          <div className="flex items-center gap-1 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
+                            <a
+                              href={createGoogleCalendarUrl(itinerary.destination, act, day.dayNumber)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 text-[#6b7a7a] hover:text-[#00696b] transition-all rounded-none hover:bg-[#00ced1]/10 border border-transparent hover:border-[#1b1c19]"
+                              title="Add to Google Calendar"
+                            >
+                              <Calendar className="w-4 h-4" />
+                            </a>
+
                             <button
                               onClick={() => handleStartEdit(act)}
-                              className="p-2 text-[#6b7a7a] hover:text-[#00696b] transition-colors rounded-lg hover:bg-black/5"
+                              className="p-2 text-[#6b7a7a] hover:text-[#00696b] transition-all rounded-none hover:bg-black/5 border border-transparent hover:border-[#1b1c19]"
                               title="Edit stop"
                             >
-                              <span className="material-symbols-outlined text-xl">edit</span>
+                              <Edit2 className="w-4 h-4" />
                             </button>
+
                             <button
                               onClick={() => handleDeleteActivity(dayIdx, act.id)}
-                              className="p-2 text-[#6b7a7a] hover:text-[#ba1a1a] transition-colors rounded-lg hover:bg-black/5"
+                              className="p-2 text-[#6b7a7a] hover:text-[#ba1a1a] transition-all rounded-none hover:bg-red-500/10 border border-transparent hover:border-[#1b1c19]"
                               title="Delete stop"
                             >
-                              <span className="material-symbols-outlined text-xl">delete</span>
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -221,7 +312,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                     })}
 
                     {day.activities.length === 0 && (
-                      <div className="text-center py-4 text-xs text-[#6b7a7a] italic bg-white/40 rounded-xl">
+                      <div className="text-center py-4 text-xs text-[#6b7a7a] italic bg-white/40 rounded-none border-2 border-dashed border-[#1b1c19]/30">
                         No activities scheduled for this day yet.
                       </div>
                     )}
@@ -230,46 +321,58 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
               ))}
             </div>
 
-            {/* Right Column: Trip Summary Sidebar */}
-            <div className="lg:col-span-4">
-              <div className="bg-[#f5f3ee]/80 p-5 rounded-2xl border border-[#bac9c9]/30 shadow-xs space-y-4">
-                <h5 className="font-bold text-[#1b1c19] text-xs uppercase tracking-wider">
-                  Trip Summary
-                </h5>
+            {/* Right Column: Trip Summary Card Widget */}
+            <div className="lg:col-span-4 sticky top-0">
+              <div className="bg-white p-6 rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-5">
+                <div className="flex items-center justify-between border-b-2 border-[#1b1c19]/20 pb-3">
+                  <h5 className="font-headline font-black text-[#1b1c19] text-xs uppercase tracking-wider flex items-center gap-2">
+                    <Map className="w-4 h-4 text-[#00696b]" /> Trip Summary
+                  </h5>
+                  <span className="px-2.5 py-0.5 rounded-none bg-[#00696b]/10 text-[#00696b] text-[10px] font-headline font-black uppercase border border-[#00696b]/30">
+                    Overview
+                  </span>
+                </div>
+
                 <div className="space-y-3.5">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#00696b]">
-                      location_on
-                    </span>
-                    <span className="text-sm font-medium text-[#3b4949]">
-                      {itinerary.totalStops} Stops
-                    </span>
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19]">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Total Stops</span>
+                    </div>
+                    <span className="text-sm font-extrabold text-[#1b1c19]">{itinerary.totalStops}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#00696b]">
-                      schedule
-                    </span>
-                    <span className="text-sm font-medium text-[#3b4949]">
-                      {itinerary.activeHours} Hours Active
-                    </span>
+
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19]">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Active Hours</span>
+                    </div>
+                    <span className="text-sm font-extrabold text-[#1b1c19]">{itinerary.activeHours} Hrs</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#00696b]">
-                      map
-                    </span>
-                    <span className="text-sm font-medium text-[#3b4949]">
-                      {itinerary.region}
-                    </span>
+
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19]">
+                        <Map className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Region</span>
+                    </div>
+                    <span className="text-xs font-extrabold text-[#1b1c19] truncate max-w-[110px]">{itinerary.region}</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#bac9c9]/30">
-                  <p className="text-xs text-[#6b7a7a] mb-2 font-medium">Vibes Included:</p>
+                {/* Vibes Section */}
+                <div className="pt-3 border-t-2 border-[#1b1c19]/20">
+                  <p className="text-xs font-bold text-[#5f6e6e] mb-2.5">Vibes Included:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {itinerary.vibes.map((v, i) => (
                       <span
                         key={i}
-                        className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-2.5 py-0.5 rounded-full font-medium"
+                        className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-3 py-1 rounded-none font-bold border border-[#1b1c19]"
                       >
                         {v}
                       </span>
@@ -278,21 +381,21 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="px-6 sm:px-10 py-5 border-t border-[#bac9c9]/20 bg-white/50">
-          <div className="flex flex-col items-center gap-3 max-w-lg mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+        {/* Floating Glass Footer Actions */}
+        <div className="px-6 sm:px-10 py-4.5 border-t-2 border-[#1b1c19] bg-white">
+          <div className="flex flex-col items-center gap-3 max-w-2xl mx-auto">
+            
+            {/* 3 Main Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
+              {/* Button 1: ICS Export */}
               <button
                 onClick={handleSyncClick}
                 disabled={syncState === 'syncing'}
-                className={`px-5 py-3 text-white font-headline font-bold text-sm sm:text-base rounded-full shadow-lg lift-hover transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                  syncState === 'synced'
-                    ? 'bg-[#00696b]'
-                    : 'bg-[#a43c12] hover:bg-[#fe7e4f] shadow-[#a43c12]/20'
-                }`}
+                className="neobrutal-btn-terracotta px-4 py-3 font-headline font-black text-xs sm:text-sm rounded-none transition-all flex items-center justify-center gap-2"
               >
                 {syncState === 'syncing' ? (
                   <>
@@ -302,53 +405,59 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                 ) : syncState === 'synced' ? (
                   <>
                     <CheckCircle className="w-4 h-4" />
-                    <span>Synced & Downloaded!</span>
+                    <span>Downloaded!</span>
                   </>
                 ) : (
                   <>
                     <Calendar className="w-4 h-4" />
-                    <span>Export Calendar (.ics)</span>
+                    <span>Export (.ics)</span>
                   </>
                 )}
               </button>
 
+              {/* Button 2: Export PDF Guide */}
               <button
-                onClick={() => {
-                  if (itinerary.days[0]?.activities[0]) {
-                    const firstAct = itinerary.days[0].activities[0];
-                    const url = createGoogleCalendarUrl(itinerary.destination, firstAct, 1);
-                    window.open(url, '_blank');
-                  }
-                }}
-                className="px-5 py-3 bg-white hover:bg-gray-50 text-[#00696b] border border-[#00696b]/30 font-headline font-bold text-sm sm:text-base rounded-full shadow-md lift-hover transition-all flex items-center justify-center gap-2"
+                onClick={() => exportItineraryToPdf(itinerary)}
+                className="neobrutal-btn-teal px-4 py-3 font-headline font-black text-xs sm:text-sm rounded-none transition-all flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export PDF Guide</span>
+              </button>
+
+              {/* Button 3: Google Calendar */}
+              <button
+                onClick={handleGoogleCalendarSync}
+                className="px-4 py-3 bg-white text-[#00696b] border-2 border-[#1b1c19] font-headline font-black text-xs sm:text-sm rounded-none shadow-[3px_3px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
               >
                 <ExternalLink className="w-4 h-4 text-[#00696b]" />
-                <span>Open in Google Calendar</span>
+                <span>Google Calendar</span>
               </button>
             </div>
 
+            {/* Maybe Later link */}
             <button
               onClick={onClose}
-              className="text-xs sm:text-sm font-semibold text-[#3b4949] hover:text-[#00696b] transition-colors py-1"
+              className="text-xs font-headline font-black uppercase text-[#5f6e6e] hover:text-[#00696b] transition-colors pt-0.5"
             >
               Maybe Later
             </button>
           </div>
 
-          {/* Progress Footnote */}
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <div className="h-[2px] w-full max-w-xs bg-[#00696b]/20 rounded-full overflow-hidden">
-              <div className="h-full bg-[#00696b]" style={{ width: '100%' }} />
+          {/* Progress Step Bar */}
+          <div className="mt-3 flex flex-col items-center justify-center gap-1.5">
+            <div className="h-2.5 w-full max-w-xs bg-[#1b1c19]/20 rounded-none border border-[#1b1c19] overflow-hidden">
+              <div className="h-full bg-[#00696b] transition-all duration-500" style={{ width: '100%' }} />
             </div>
-            <span className="material-symbols-outlined text-[#00696b] text-lg">
-              check_circle
-            </span>
+            <p className="text-[10px] text-[#6b7a7a] uppercase tracking-widest font-extrabold flex items-center gap-1">
+              <CheckCircle className="w-3 h-3 text-[#00696b]" /> Step 4 of 4: Final Confirmation
+            </p>
           </div>
-          <p className="text-[10px] text-[#6b7a7a] text-center mt-1 uppercase tracking-wider font-semibold">
-            Step 4 of 4: Final Confirmation
-          </p>
+
         </div>
+
       </div>
     </div>
   );
 };
+
+

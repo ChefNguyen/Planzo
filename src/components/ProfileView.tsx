@@ -125,43 +125,43 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       {/* Edit Profile Modal */}
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-[#bac9c9]/30 space-y-4 animate-in zoom-in-95 duration-200">
-            <h3 className="font-headline font-bold text-xl text-[#1b1c19]">Edit User Profile</h3>
+          <div className="bg-white rounded-none p-6 sm:p-8 max-w-md w-full border-2 border-[#1b1c19] shadow-[6px_6px_0px_0px_#00696b] space-y-4 animate-in zoom-in-95 duration-200">
+            <h3 className="font-headline font-black text-xl text-[#1b1c19]">Edit User Profile</h3>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#00696b] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-headline font-black text-[#00696b] uppercase tracking-wider mb-1">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={profile.displayName}
                   onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#f5f3ee] border border-[#bac9c9]/40 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#00696b]"
+                  className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#00696b] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-headline font-black text-[#00696b] uppercase tracking-wider mb-1">
                   Bio
                 </label>
                 <textarea
                   value={profile.bio}
                   onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                   rows={2}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#f5f3ee] border border-[#bac9c9]/40 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#00696b]"
+                  className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#00696b] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-headline font-black text-[#00696b] uppercase tracking-wider mb-1">
                   Avatar Image URL
                 </label>
                 <input
                   type="text"
                   value={profile.photoURL}
                   onChange={(e) => setProfile({ ...profile, photoURL: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#f5f3ee] border border-[#bac9c9]/40 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#00696b]"
+                  className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold focus:outline-none"
                 />
               </div>
             </div>
@@ -169,13 +169,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setIsEditingProfile(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-[#6b7a7a] hover:bg-[#f5f3ee]"
+                className="px-4 py-2 rounded-none text-xs font-bold text-[#6b7a7a] border-2 border-[#1b1c19] bg-white"
               >
                 Cancel
               </button>
               <button
                 onClick={() => setIsEditingProfile(false)}
-                className="px-5 py-2 bg-[#00696b] text-white rounded-xl text-xs font-bold shadow-xs hover:bg-[#005354]"
+                className="neobrutal-btn-teal px-5 py-2 text-xs font-black uppercase rounded-none shadow-[2px_2px_0px_0px_#1b1c19]"
               >
                 Save Changes
               </button>
@@ -187,19 +187,20 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       {/* TOP SECTION: User Profile Left Card + 3 Right Setting Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column (User Profile Card) */}
-        <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-[#bac9c9]/30 shadow-xs flex flex-col items-center text-center relative space-y-4">
+        <div className="lg:col-span-4 bg-white p-6 border-2 border-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#00696b] flex flex-col items-center text-center relative space-y-4">
           {/* Avatar Container with Badge */}
           <div className="relative group cursor-pointer" onClick={() => setIsEditingProfile(true)}>
-            <div className="w-36 h-36 rounded-3xl overflow-hidden shadow-md border-2 border-[#f5f3ee]">
+            <div className="w-36 h-36 border-2 border-[#1b1c19] overflow-hidden shadow-[3px_3px_0px_0px_#1b1c19] rounded-none">
               <img
                 src={profile.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'}
                 alt={profile.displayName}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
             </div>
 
-            {/* Orange Badge Pill overlapping bottom of avatar */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#a43c12] text-white px-3.5 py-1 rounded-full text-xs font-extrabold shadow-sm tracking-wide whitespace-nowrap flex items-center gap-1">
+            {/* Neobrutalist Orange Badge Pill */}
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#a43c12] text-white px-3.5 py-1 text-xs font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] whitespace-nowrap flex items-center gap-1 rounded-none">
               <span>Level 42 Explorer</span>
             </div>
           </div>
@@ -223,21 +224,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
           {/* 3 Metric Cards Row */}
           <div className="grid grid-cols-3 gap-2.5 w-full pt-2">
-            <div className="bg-[#f5f3ee] p-3 rounded-2xl text-center border border-[#bac9c9]/20">
+            <div className="bg-[#f5f3ee] p-3 text-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]">
               <span className="block text-xl font-headline font-black text-[#1b1c19]">24</span>
-              <span className="text-[10px] font-extrabold text-[#6b7a7a] tracking-wider uppercase">
+              <span className="text-[10px] font-black text-[#6b7a7a] tracking-wider uppercase">
                 TRIPS
               </span>
             </div>
 
-            <div className="bg-[#f5f3ee] p-3 rounded-2xl text-center border border-[#bac9c9]/20">
+            <div className="bg-[#f5f3ee] p-3 text-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]">
               <span className="block text-xl font-headline font-black text-[#1b1c19]">12.4k</span>
-              <span className="text-[10px] font-extrabold text-[#6b7a7a] tracking-wider uppercase">
+              <span className="text-[10px] font-black text-[#6b7a7a] tracking-wider uppercase">
                 MILES
               </span>
             </div>
 
-            <div className="bg-[#00ced1]/20 p-3 rounded-2xl text-center border border-[#00ced1]/30">
+            <div className="bg-[#00ced1]/20 p-3 text-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]">
               <span className="block text-xl font-headline font-black text-[#005354]">88%</span>
               <span className="text-[10px] font-extrabold text-[#005354] tracking-wider uppercase">
                 VIBE
@@ -251,7 +252,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           {/* Top Row: Preferences Card + Connected Card */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Preferences Card */}
-            <div className="bg-white rounded-3xl p-6 border border-[#bac9c9]/30 shadow-xs space-y-4">
+            <div className="bg-white rounded-none p-6 border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-[#00696b]" />
@@ -274,10 +275,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     key={tag.id}
                     disabled={!isEditingPreferences}
                     onClick={() => togglePreference(tag.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all border-2 border-[#1b1c19] ${
                       tag.active
-                        ? 'bg-[#00696b] text-white shadow-xs'
-                        : 'bg-[#f5f3ee] text-[#6b7a7a] border border-[#bac9c9]/20'
+                        ? 'bg-[#00696b] text-white shadow-[2px_2px_0px_0px_#1b1c19]'
+                        : 'bg-[#f5f3ee] text-[#6b7a7a]'
                     } ${isEditingPreferences ? 'hover:scale-105 cursor-pointer' : 'cursor-default'}`}
                   >
                     {tag.label}
@@ -287,7 +288,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
 
             {/* Connected Apps Card */}
-            <div className="bg-white rounded-3xl p-6 border border-[#bac9c9]/30 shadow-xs space-y-4">
+            <div className="bg-white rounded-none p-6 border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-4">
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-[#00696b]" />
                 <h3 className="font-headline font-extrabold text-lg text-[#1b1c19]">
@@ -297,32 +298,55 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
               <div className="space-y-3">
                 {/* Google Calendar Row */}
-                <div className="p-3 bg-[#f5f3ee] rounded-2xl border border-[#bac9c9]/20 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="w-4 h-4 text-[#00696b]" />
-                    <span className="text-xs font-bold text-[#1b1c19]">Google Calendar</span>
+                <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Calendar className="w-4 h-4 text-[#00696b]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#1b1c19] block">Google Calendar</span>
+                        <span className="text-[10px] text-[#6b7a7a] font-medium">
+                          {isCalendarConnected
+                            ? (sessionStorage.getItem('gcal_account_email') || currentUser?.email || 'Auto-Sync Active')
+                            : 'Not Connected'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={onToggleCalendar}
+                      className={`px-3 py-1 rounded-none text-[10px] font-headline font-black tracking-wider uppercase transition-all border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] ${
+                        isCalendarConnected
+                          ? 'bg-[#00ced1]/25 text-[#005354] hover:bg-red-100 hover:text-red-700'
+                          : 'bg-[#00696b] text-white hover:-translate-y-0.5'
+                      }`}
+                    >
+                      {isCalendarConnected ? 'ACTIVE ✓' : 'Connect'}
+                    </button>
                   </div>
-                  <button
-                    onClick={onToggleCalendar}
-                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase transition-all ${
-                      isCalendarConnected
-                        ? 'bg-[#00ced1]/25 text-[#005354]'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {isCalendarConnected ? 'ACTIVE' : 'Connect'}
-                  </button>
+
+                  {isCalendarConnected && (
+                    <div className="pt-2 border-t border-[#1b1c19]/20 flex items-center justify-between text-[11px]">
+                      <span className="text-[#3b4949] font-medium">Auto-sync itinerary stops</span>
+                      <a
+                        href="https://calendar.google.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#00696b] font-bold hover:underline"
+                      >
+                        Open Calendar ↗
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expensify Row */}
-                <div className="p-3 bg-[#f5f3ee] rounded-2xl border border-[#bac9c9]/20 flex items-center justify-between">
+                <div className="p-3 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <CreditCard className="w-4 h-4 text-[#a43c12]" />
                     <span className="text-xs font-bold text-[#1b1c19]">Expensify</span>
                   </div>
                   <button
                     onClick={() => setIsExpensifyConnected(!isExpensifyConnected)}
-                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase transition-all ${
+                    className={`px-3 py-1 rounded-none text-[10px] font-extrabold tracking-wider uppercase transition-all border-2 border-[#1b1c19] ${
                       isExpensifyConnected
                         ? 'bg-[#00ced1]/25 text-[#005354]'
                         : 'text-[#00696b] font-bold hover:underline'
@@ -336,7 +360,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {/* Bottom Row: Notification Settings Card */}
-          <div className="bg-white rounded-3xl p-6 border border-[#bac9c9]/30 shadow-xs space-y-4">
+          <div className="bg-white rounded-none p-6 border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-4">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-[#00696b]" />
               <h3 className="font-headline font-extrabold text-lg text-[#1b1c19]">
@@ -346,18 +370,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Trip Updates */}
-              <div className="p-3.5 bg-[#f5f3ee] rounded-2xl border border-[#bac9c9]/20 flex items-center justify-between">
+              <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1b1c19]">Trip Updates</span>
                 <button
                   onClick={() =>
                     setNotifications((n) => ({ ...n, tripUpdates: !n.tripUpdates }))
                   }
-                  className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ${
+                  className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.tripUpdates ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
+                    className={`bg-white w-4 h-4 rounded-none border border-[#1b1c19] shadow-xs transform transition-transform duration-200 ${
                       notifications.tripUpdates ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
@@ -365,18 +389,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
 
               {/* Flight Alerts */}
-              <div className="p-3.5 bg-[#f5f3ee] rounded-2xl border border-[#bac9c9]/20 flex items-center justify-between">
+              <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1b1c19]">Flight Alerts</span>
                 <button
                   onClick={() =>
                     setNotifications((n) => ({ ...n, flightAlerts: !n.flightAlerts }))
                   }
-                  className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ${
+                  className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.flightAlerts ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
+                    className={`bg-white w-4 h-4 rounded-none border border-[#1b1c19] shadow-xs transform transition-transform duration-200 ${
                       notifications.flightAlerts ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
@@ -384,18 +408,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
 
               {/* Vibe Check-ins */}
-              <div className="p-3.5 bg-[#f5f3ee] rounded-2xl border border-[#bac9c9]/20 flex items-center justify-between">
+              <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1b1c19]">Vibe Check-ins</span>
                 <button
                   onClick={() =>
                     setNotifications((n) => ({ ...n, vibeCheckIns: !n.vibeCheckIns }))
                   }
-                  className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ${
+                  className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.vibeCheckIns ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
+                    className={`bg-white w-4 h-4 rounded-none border border-[#1b1c19] shadow-xs transform transition-transform duration-200 ${
                       notifications.vibeCheckIns ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
@@ -433,11 +457,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             <div
               key={trip.id}
               onClick={() => onSelectTab('my-trips')}
-              className="bg-white rounded-3xl overflow-hidden border border-[#bac9c9]/30 shadow-xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+              className="bg-white rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] hover:-translate-y-0.5 transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 {/* Banner Image with Overlay Badge */}
-                <div className="h-44 w-full relative overflow-hidden bg-gray-100">
+                <div className="h-44 w-full relative overflow-hidden bg-gray-100 border-b-2 border-[#1b1c19]">
                   <img
                     src={trip.imageUrl}
                     alt={trip.title}
@@ -446,7 +470,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   {/* Status Badge */}
                   <div className="absolute top-3 right-3">
                     <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-xs ${trip.badgeClass}`}
+                      className={`px-3 py-1 rounded-none text-[10px] font-extrabold tracking-wider uppercase border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] ${trip.badgeClass}`}
                     >
                       {trip.status}
                     </span>
@@ -471,7 +495,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       key={i}
                       src={avatar}
                       alt="Collaborator"
-                      className="w-6 h-6 rounded-full border-2 border-white object-cover"
+                      className="w-6 h-6 rounded-none border-2 border-[#1b1c19] object-cover"
                     />
                   ))}
                   {trip.pendingText && (
@@ -481,8 +505,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                 {/* Action Link */}
                 <div className="text-xs font-bold text-[#00696b] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  <span>{trip.status === 'DRAFT' ? 'Edit Draft ✏️' : 'View Itinerary'}</span>
-                  {trip.status !== 'DRAFT' && <ArrowRight className="w-3.5 h-3.5" />}
+                  <span>{trip.status === 'DRAFT' ? 'Edit Draft' : 'View Itinerary'}</span>
+                  {trip.status === 'DRAFT' ? <Edit2 className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                 </div>
               </div>
             </div>

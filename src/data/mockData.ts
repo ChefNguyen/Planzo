@@ -3,7 +3,14 @@ import { Itinerary } from '../types';
 export const KYOTO_DEFAULT_ITINERARY: Itinerary = {
   id: 'kyoto-escape-1',
   destination: 'Kyoto, Japan',
-  dates: 'Oct 12 - Oct 16, 2026',
+  startDate: '2026-10-12',
+  endDate: '2026-10-16',
+  duration: {
+    days: 5,
+    nights: 4,
+    formatted: '5 days • 4 nights'
+  },
+  dates: 'Oct 12 - Oct 16, 2026 (5 days • 4 nights)',
   vibes: ['Cultural Immersion', 'Spiritual', 'Foodie', 'Scenic'],
   totalStops: 3,
   activeHours: 5.5,
@@ -87,7 +94,14 @@ export const SAMPLE_COMMUNITY_TRIPS: Itinerary[] = [
   {
     id: 'tokyo-neon-1',
     destination: 'Tokyo, Japan',
-    dates: 'Nov 2 - Nov 7, 2026',
+    startDate: '2026-11-02',
+    endDate: '2026-11-07',
+    duration: {
+      days: 6,
+      nights: 5,
+      formatted: '6 days • 5 nights'
+    },
+    dates: 'Nov 2 - Nov 7, 2026 (6 days • 5 nights)',
     vibes: ['Nightlife', 'Foodie', 'Cyberpunk Aesthetics'],
     totalStops: 8,
     activeHours: 14.0,
