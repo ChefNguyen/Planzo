@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_ID: planzo-504402
   SERVICE_NAME: planzo-ai
-  REGION: asia-southeast1
+  REGION: us-west1
   REPO_NAME: planzo-repo
 
 jobs:
