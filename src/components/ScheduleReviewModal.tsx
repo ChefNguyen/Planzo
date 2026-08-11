@@ -4,7 +4,7 @@ import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Down
 import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi } from '../lib/googleCalendar';
 import { exportItineraryToPdf } from '../lib/exportPdf';
 import { signInWithGoogle, connectGoogleCalendarAccount, auth } from '../lib/firebase';
-import { parseActivityTimeRange, formatActivityTimeRange, calculateEndTimeFromStart } from '../lib/timeUtils';
+import { parseActivityTimeRange, formatActivityTimeRange } from '../lib/timeUtils';
 
 interface ScheduleReviewModalProps {
   itinerary: Itinerary;
@@ -109,11 +109,6 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     setEditStartTime(startTime);
     setEditEndTime(endTime);
     setEditVibe(act.vibe);
-  };
-
-  const handleApplyDurationPreset = (hours: number) => {
-    const newEndTime = calculateEndTimeFromStart(editStartTime, hours);
-    setEditEndTime(newEndTime);
   };
 
   const handleSaveEdit = (dayIndex: number) => {
@@ -223,61 +218,28 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                             key={act.id}
                             className="bg-white p-4.5 rounded-none border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#00ced1] space-y-3 animate-in fade-in"
                           >
-                            <div className="space-y-2 bg-[#f9f8f4] p-3 border-2 border-[#1b1c19]">
-                              <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-headline font-black uppercase text-[#00696b] tracking-wider flex items-center gap-1">
-                                  <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Thời Gian Dừng
-                                </label>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-2.5">
-                                <div>
-                                  <label className="text-[10px] font-black uppercase text-[#5f6e6e] block mb-0.5">Giờ Bắt Đầu</label>
-                                  <input
-                                    type="text"
-                                    value={editStartTime}
-                                    onChange={(e) => setEditStartTime(e.target.value)}
-                                    placeholder="09:00 AM"
-                                    className="w-full text-xs font-bold text-[#1b1c19] border-2 border-[#1b1c19] bg-white p-2 focus:outline-none"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="text-[10px] font-black uppercase text-[#00696b] block mb-0.5">Giờ Kết Thúc</label>
-                                  <input
-                                    type="text"
-                                    value={editEndTime}
-                                    onChange={(e) => setEditEndTime(e.target.value)}
-                                    placeholder="11:00 AM"
-                                    className="w-full text-xs font-black text-[#00696b] border-2 border-[#00696b] bg-[#00ced1]/10 p-2 focus:outline-none"
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Duration Shortcuts */}
-                              <div className="flex items-center gap-1.5 pt-1">
-                                <span className="text-[10px] font-bold text-[#5f6e6e]">Tự động:</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleApplyDurationPreset(1)}
-                                  className="px-2 py-0.5 text-[10px] font-bold bg-white border border-[#1b1c19] hover:bg-[#00ced1]/20"
-                                >
-                                  +1h
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleApplyDurationPreset(2)}
-                                  className="px-2 py-0.5 text-[10px] font-extrabold bg-[#00696b] text-white border border-[#1b1c19] hover:bg-[#005354]"
-                                >
-                                  +2h
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleApplyDurationPreset(3)}
-                                  className="px-2 py-0.5 text-[10px] font-bold bg-white border border-[#1b1c19] hover:bg-[#00ced1]/20"
-                                >
-                                  +3h
-                                </button>
+                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                              <label className="text-[11px] font-headline font-black uppercase text-[#00696b] tracking-wider flex items-center gap-1.5 shrink-0">
+                                <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Thời Gian:
+                              </label>
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="text"
+                                  value={editStartTime}
+                                  onChange={(e) => setEditStartTime(e.target.value)}
+                                  placeholder="09:00 AM"
+                                  className="text-xs font-bold text-[#00696b] bg-[#00ced1]/15 border-2 border-[#1b1c19] px-2 py-1 rounded-none w-24 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19]"
+                                  title="Giờ Bắt Đầu"
+                                />
+                                <span className="text-xs font-black text-[#1b1c19]">-</span>
+                                <input
+                                  type="text"
+                                  value={editEndTime}
+                                  onChange={(e) => setEditEndTime(e.target.value)}
+                                  placeholder="11:00 AM"
+                                  className="text-xs font-black text-[#00696b] bg-[#00ced1]/30 border-2 border-[#1b1c19] px-2 py-1 rounded-none w-24 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19]"
+                                  title="Giờ Kết Thúc"
+                                />
                               </div>
                             </div>
 
