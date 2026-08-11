@@ -27,11 +27,6 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
   const [draggedActIndex, setDraggedActIndex] = useState<number | null>(null);
   const [dragOverActIndex, setDragOverActIndex] = useState<number | null>(null);
 
-  // Time editing state
-  const [editingTimeActId, setEditingTimeActId] = useState<string | null>(null);
-  const [editStartTime, setEditStartTime] = useState<string>('09:00 AM');
-  const [editEndTime, setEditEndTime] = useState<string>('11:00 AM');
-
   // Splitter Bar state & dragging logic
   const [sidebarWidth, setSidebarWidth] = useState<number>(42); // Percentage (min 25%, max 65%)
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -61,20 +56,8 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
     setDragOverActIndex(null);
   };
 
-  const handleStartEditTime = (act: Activity) => {
-    const { startTime, endTime } = parseActivityTimeRange(act.time);
-    setEditStartTime(startTime);
-    setEditEndTime(endTime);
-    setEditingTimeActId(act.id);
-  };
-
-  const handleApplyDurationPreset = (hours: number) => {
-    const newEndTime = calculateEndTimeFromStart(editStartTime, hours);
-    setEditEndTime(newEndTime);
-  };
-
-  const handleSaveTimeEdit = (actId: string) => {
-    const newTime = formatActivityTimeRange(editStartTime, editEndTime);
+  const handleTimeChange = (actId: string, newStart: string, newEnd: string) => {
+    const newTime = formatActivityTimeRange(newStart, newEnd);
     const updatedDays = itinerary.days.map((day, idx) => {
       if (idx === selectedDayIndex) {
         return {
@@ -91,7 +74,6 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
       ...itinerary,
       days: updatedDays,
     });
-    setEditingTimeActId(null);
   };
 
   useEffect(() => {
@@ -319,102 +301,30 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
 
                         {/* Content Details */}
                         <div className="flex-1 min-w-0 w-full">
-                          <div className="flex items-center justify-between gap-2">
-                            {editingTimeActId === act.id ? (
-                              <div className="flex flex-col gap-2 p-2.5 bg-[#f9f8f4] border-2 border-[#1b1c19] rounded-none shadow-[3px_3px_0px_0px_#00ced1] w-full mt-1 mb-1" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-between text-xs font-headline font-black text-[#1b1c19]">
-                                  <span className="flex items-center gap-1.5 text-[#00696b] uppercase tracking-wider text-[11px]">
-                                    <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Chỉnh sửa Thời gian dừng
-                                  </span>
-                                  <span className="text-[10px] text-[#5f6e6e] font-semibold">Mặc định: 2 tiếng</span>
+                          <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                            {(() => {
+                              const { startTime, endTime } = parseActivityTimeRange(act.time);
+                              return (
+                                <div className="flex items-center gap-1 sm:gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                  <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
+                                  <input
+                                    type="text"
+                                    value={startTime}
+                                    onChange={(e) => handleTimeChange(act.id, e.target.value, endTime)}
+                                    className="text-[11px] font-headline font-black text-[#00696b] uppercase bg-[#00ced1]/15 border-2 border-[#1b1c19] px-1.5 sm:px-2 py-0.5 rounded-none w-[78px] sm:w-[84px] text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] transition-all"
+                                    title="Giờ Bắt Đầu (Nhấp để sửa)"
+                                  />
+                                  <span className="text-xs font-black text-[#1b1c19]">-</span>
+                                  <input
+                                    type="text"
+                                    value={endTime}
+                                    onChange={(e) => handleTimeChange(act.id, startTime, e.target.value)}
+                                    className="text-[11px] font-headline font-black text-[#00696b] uppercase bg-[#00ced1]/30 border-2 border-[#1b1c19] px-1.5 sm:px-2 py-0.5 rounded-none w-[78px] sm:w-[84px] text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] transition-all"
+                                    title="Giờ Kết Thúc (Nhấp để sửa)"
+                                  />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <label className="text-[10px] font-black uppercase text-[#5f6e6e] block mb-0.5">Giờ Bắt Đầu</label>
-                                    <input
-                                      type="text"
-                                      value={editStartTime}
-                                      onChange={(e) => setEditStartTime(e.target.value)}
-                                      placeholder="09:00 AM"
-                                      className="w-full text-xs font-bold text-[#1b1c19] border-2 border-[#1b1c19] bg-white px-2 py-1 focus:outline-none"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[10px] font-black uppercase text-[#00696b] block mb-0.5">Giờ Kết Thúc (End Time)</label>
-                                    <input
-                                      type="text"
-                                      value={editEndTime}
-                                      onChange={(e) => setEditEndTime(e.target.value)}
-                                      placeholder="11:00 AM"
-                                      className="w-full text-xs font-black text-[#00696b] border-2 border-[#00696b] bg-[#00ced1]/10 px-2 py-1 focus:outline-none"
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Quick Duration Presets for End Time */}
-                                <div className="flex items-center gap-1.5 pt-0.5">
-                                  <span className="text-[10px] font-extrabold text-[#5f6e6e]">Tự động End Time:</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleApplyDurationPreset(1)}
-                                    className="px-2 py-0.5 text-[10px] font-extrabold bg-white border border-[#1b1c19] hover:bg-[#00ced1]/20 text-[#1b1c19] transition-colors"
-                                  >
-                                    +1h
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleApplyDurationPreset(2)}
-                                    className="px-2 py-0.5 text-[10px] font-extrabold bg-[#00696b] text-white border border-[#1b1c19] hover:bg-[#005354] transition-colors"
-                                    title="Tự động tính End Time 2 tiếng mặc định"
-                                  >
-                                    +2h (Chuẩn)
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleApplyDurationPreset(3)}
-                                    className="px-2 py-0.5 text-[10px] font-extrabold bg-white border border-[#1b1c19] hover:bg-[#00ced1]/20 text-[#1b1c19] transition-colors"
-                                  >
-                                    +3h
-                                  </button>
-                                </div>
-
-                                <div className="flex justify-end gap-1.5 pt-1.5 border-t border-[#1b1c19]/20">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingTimeActId(null)}
-                                    className="px-3 py-1 text-xs text-[#6b7a7a] bg-white border border-[#1b1c19] font-bold hover:bg-gray-100"
-                                  >
-                                    Hủy
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSaveTimeEdit(act.id)}
-                                    className="neobrutal-btn-teal px-3.5 py-1 text-xs font-black shadow-[2px_2px_0px_0px_#1b1c19]"
-                                  >
-                                    Lưu Thời Gian
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1">
-                                <span className="text-[11px] font-headline font-black text-[#00696b] uppercase tracking-wider bg-[#00ced1]/20 border border-[#00696b]/30 px-2.5 py-0.5 rounded-none flex items-center gap-1.5">
-                                  <Clock className="w-3 h-3 text-[#00696b]" />
-                                  {act.time}
-                                </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStartEditTime(act);
-                                  }}
-                                  className="p-1 text-[#6b7a7a] hover:text-[#00696b] hover:bg-[#00ced1]/15 rounded-none border border-transparent hover:border-[#1b1c19] transition-all"
-                                  title="Chỉnh sửa Giờ Bắt đầu & Giờ Kết thúc"
-                                >
-                                  <Edit2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            )}
+                              );
+                            })()}
 
                             {/* Action Buttons: Drag Handle & Add to Cal */}
                             <div className="flex items-center gap-1.5">

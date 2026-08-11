@@ -270,7 +270,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                                   onClick={() => handleApplyDurationPreset(2)}
                                   className="px-2 py-0.5 text-[10px] font-extrabold bg-[#00696b] text-white border border-[#1b1c19] hover:bg-[#005354]"
                                 >
-                                  +2h (Chuẩn)
+                                  +2h
                                 </button>
                                 <button
                                   type="button"
@@ -322,12 +322,21 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                           className="group relative bg-white p-4 rounded-none border-2 border-[#1b1c19] flex justify-between items-center shadow-[2px_2px_0px_0px_#1b1c19] transition-all duration-200"
                         >
                           <div className="flex flex-col gap-1 pr-3">
-                            <div className="flex items-center gap-2">
-                              <span className="px-2.5 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide flex items-center gap-1.5">
-                                <Clock className="w-3 h-3 text-[#00696b]" />
-                                {act.time}
-                              </span>
-                            </div>
+                            {(() => {
+                              const { startTime, endTime } = parseActivityTimeRange(act.time);
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
+                                  <span className="px-2 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide">
+                                    {startTime}
+                                  </span>
+                                  <span className="text-xs font-black text-[#1b1c19]">-</span>
+                                  <span className="px-2 py-0.5 rounded-none bg-[#00ced1]/25 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide">
+                                    {endTime}
+                                  </span>
+                                </div>
+                              );
+                            })()}
 
                             <h3 className="font-bold text-base sm:text-lg text-[#1b1c19] leading-snug mt-0.5">
                               {act.title}
