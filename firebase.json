@@ -5,7 +5,7 @@
   },
   "hosting": {
     "site": "planzo-ai",
-    "public": "dist",
+    "public": "empty_hosting",
     "ignore": [
       "firebase.json",
       "**/.*",
