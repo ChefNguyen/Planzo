@@ -211,7 +211,7 @@ async function startServer() {
       const budgetText = budgetLevel ? `Budget Tier: ${budgetLevel}` : 'Budget Tier: Mid-range ($$)';
       const paceText = travelPace ? `Travel Pace: ${travelPace}` : 'Travel Pace: Moderate (4-5 stops/day)';
 
-      let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots, iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.`;
+      let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots (specifying explicit Start Time - End Time with default duration of ~2 hours per stop, e.g. "09:00 AM - 11:00 AM", "01:30 PM - 03:30 PM"), iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.`;
 
       let userPrompt = '';
       if (mode === 'prompt' && prompt) {
@@ -435,21 +435,21 @@ async function createFallbackItinerary(destination?: string, dates?: string, vib
       title: template.title,
       activities: [
         {
-          time: '08:30 AM - 11:30 AM',
+          time: '09:00 AM - 11:00 AM',
           title: `${template.act1}`,
           vibe: 'Scenic & Atmospheric. Iconic local experience.',
           location: `${dest} Central`,
           category: 'culture',
         },
         {
-          time: '01:30 PM - 04:30 PM',
+          time: '02:00 PM - 04:00 PM',
           title: `${template.act2}`,
           vibe: 'Bustling & Vibrant. Great for photos.',
           location: `${dest} Landmark`,
           category: 'sightseeing',
         },
         {
-          time: '06:00 PM - 09:00 PM',
+          time: '06:00 PM - 08:00 PM',
           title: `Thưởng thức Ẩm thực Đêm & Thư giãn tại ${dest}`,
           vibe: 'Ambient lighting & Great atmosphere.',
           location: `${dest} Center`,

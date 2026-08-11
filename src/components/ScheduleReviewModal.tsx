@@ -211,14 +211,16 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                             key={act.id}
                             className="bg-white p-4.5 rounded-none border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#00ced1] space-y-3 animate-in fade-in"
                           >
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-[#00696b]" />
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-extrabold uppercase text-[#00696b] tracking-wider flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-[#00696b]" /> Schedule (Start Time - End Time)
+                              </label>
                               <input
                                 type="text"
                                 value={editTime}
                                 onChange={(e) => setEditTime(e.target.value)}
-                                placeholder="Time (e.g. 09:00 AM - 11:30 AM)"
-                                className="w-full text-xs font-bold text-[#00696b] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none"
+                                placeholder="Start - End Time (e.g. 09:00 AM - 11:00 AM)"
+                                className="w-full text-xs font-bold text-[#00696b] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none shadow-[2px_2px_0px_0px_#1b1c19]"
                               />
                             </div>
 
@@ -263,7 +265,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                         >
                           <div className="flex flex-col gap-1 pr-3">
                             <div className="flex items-center gap-2">
-                              <span className="px-2.5 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide">
+                              <span className="px-2.5 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide flex items-center gap-1.5">
+                                <Clock className="w-3 h-3 text-[#00696b]" />
                                 {act.time}
                               </span>
                             </div>

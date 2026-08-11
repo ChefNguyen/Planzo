@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Itinerary, Activity } from '../types';
-import { MapPin, Calendar, ArrowLeft, ExternalLink, GripVertical } from 'lucide-react';
+import { MapPin, Calendar, ArrowLeft, ExternalLink, GripVertical, Clock, Edit2, Check, X } from 'lucide-react';
 import { GoogleMapView } from './GoogleMapView';
 import { createGoogleCalendarUrl } from '../lib/googleCalendar';
 import { getPlacePhoto } from '../lib/photoUtils';
@@ -25,6 +25,10 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
 
   const [draggedActIndex, setDraggedActIndex] = useState<number | null>(null);
   const [dragOverActIndex, setDragOverActIndex] = useState<number | null>(null);
+
+  // Time editing state
+  const [editingTimeActId, setEditingTimeActId] = useState<string | null>(null);
+  const [tempTime, setTempTime] = useState<string>('');
 
   // Splitter Bar state & dragging logic
   const [sidebarWidth, setSidebarWidth] = useState<number>(42); // Percentage (min 25%, max 65%)
@@ -53,6 +57,30 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
     });
     setDraggedActIndex(null);
     setDragOverActIndex(null);
+  };
+
+  const handleSaveTimeEdit = (actId: string) => {
+    if (!tempTime.trim()) {
+      setEditingTimeActId(null);
+      return;
+    }
+    const updatedDays = itinerary.days.map((day, idx) => {
+      if (idx === selectedDayIndex) {
+        return {
+          ...day,
+          activities: day.activities.map((act) =>
+            act.id === actId ? { ...act, time: tempTime.trim() } : act
+          ),
+        };
+      }
+      return day;
+    });
+
+    onUpdateItinerary({
+      ...itinerary,
+      days: updatedDays,
+    });
+    setEditingTimeActId(null);
   };
 
   useEffect(() => {
@@ -281,9 +309,55 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                         {/* Content Details */}
                         <div className="flex-1 min-w-0 w-full">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-headline font-black text-[#00696b] uppercase tracking-wider bg-[#00ced1]/20 border border-[#00696b]/30 px-2.5 py-0.5 rounded-none">
-                              {act.time}
-                            </span>
+                            {editingTimeActId === act.id ? (
+                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
+                                <input
+                                  type="text"
+                                  value={tempTime}
+                                  onChange={(e) => setTempTime(e.target.value)}
+                                  placeholder="Start - End (e.g. 09:00 AM - 11:00 AM)"
+                                  className="text-xs font-bold text-[#00696b] border-2 border-[#1b1c19] bg-white rounded-none px-2 py-0.5 w-44 focus:outline-none shadow-[2px_2px_0px_0px_#1b1c19]"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveTimeEdit(act.id);
+                                    if (e.key === 'Escape') setEditingTimeActId(null);
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleSaveTimeEdit(act.id)}
+                                  className="p-1 bg-[#00696b] text-white border-2 border-[#1b1c19] rounded-none hover:bg-[#005354] transition-colors"
+                                  title="Lưu khung giờ"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => setEditingTimeActId(null)}
+                                  className="p-1 bg-white text-[#6b7a7a] border-2 border-[#1b1c19] rounded-none hover:bg-gray-100 transition-colors"
+                                  title="Hủy"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[11px] font-headline font-black text-[#00696b] uppercase tracking-wider bg-[#00ced1]/20 border border-[#00696b]/30 px-2.5 py-0.5 rounded-none flex items-center gap-1.5">
+                                  <Clock className="w-3 h-3 text-[#00696b]" />
+                                  {act.time}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTimeActId(act.id);
+                                    setTempTime(act.time);
+                                  }}
+                                  className="p-1 text-[#6b7a7a] hover:text-[#00696b] hover:bg-[#00ced1]/15 rounded-none border border-transparent hover:border-[#1b1c19] transition-all"
+                                  title="Chỉnh sửa khung giờ (Start & End Time)"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
 
                             {/* Action Buttons: Drag Handle & Add to Cal */}
                             <div className="flex items-center gap-1.5">
