@@ -211,7 +211,12 @@ async function startServer() {
       const budgetText = budgetLevel ? `Budget Tier: ${budgetLevel}` : 'Budget Tier: Mid-range ($$)';
       const paceText = travelPace ? `Travel Pace: ${travelPace}` : 'Travel Pace: Moderate (4-5 stops/day)';
 
-      let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots (specifying explicit Start Time - End Time with default duration of ~2 hours per stop, e.g. "09:00 AM - 11:00 AM", "01:30 PM - 03:30 PM"), iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.`;
+      let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots (specifying explicit Start Time - End Time with default duration of ~2 hours per stop, e.g. "09:00 AM - 11:00 AM", "01:30 PM - 03:30 PM"), iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.
+
+CRITICAL LANGUAGE CONSISTENCY RULE:
+- Detect the primary language of the user input/prompt or destination.
+- If the user writes in Vietnamese OR selects a Vietnamese destination (e.g. Quy Nhon, Da Nang, Ha Noi, Sai Gon, Phu Quoc, etc.), write 100% of ALL titles, vibe descriptions, day headings, and region names in VIETNAMESE.
+- Do NOT mix English and Vietnamese (e.g. do NOT write a Vietnamese title with an English vibe note). Keep 100% of all fields strictly in Vietnamese.`;
 
       let userPrompt = '';
       if (mode === 'prompt' && prompt) {
@@ -437,21 +442,21 @@ async function createFallbackItinerary(destination?: string, dates?: string, vib
         {
           time: '09:00 AM - 11:00 AM',
           title: `${template.act1}`,
-          vibe: 'Scenic & Atmospheric. Iconic local experience.',
+          vibe: 'Cảnh quan tuyệt đẹp, trải nghiệm văn hóa bản địa đặc sắc.',
           location: `${dest} Central`,
           category: 'culture',
         },
         {
           time: '02:00 PM - 04:00 PM',
           title: `${template.act2}`,
-          vibe: 'Bustling & Vibrant. Great for photos.',
+          vibe: 'Náo nhiệt & sôi động, địa điểm chụp ảnh check-in lý tưởng.',
           location: `${dest} Landmark`,
           category: 'sightseeing',
         },
         {
           time: '06:00 PM - 08:00 PM',
           title: `Thưởng thức Ẩm thực Đêm & Thư giãn tại ${dest}`,
-          vibe: 'Ambient lighting & Great atmosphere.',
+          vibe: 'Không gian lãng mạn, ẩm thực ấm cúng về đêm.',
           location: `${dest} Center`,
           category: 'food',
         },
