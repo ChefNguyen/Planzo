@@ -4,7 +4,7 @@ import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Down
 import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi } from '../lib/googleCalendar';
 import { exportItineraryToPdf } from '../lib/exportPdf';
 import { signInWithGoogle, connectGoogleCalendarAccount, auth } from '../lib/firebase';
-import { parseActivityTimeRange, formatActivityTimeRange } from '../lib/timeUtils';
+import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
 
 interface ScheduleReviewModalProps {
   itinerary: Itinerary;
@@ -224,21 +224,27 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                               </label>
                               <div className="flex items-center gap-1.5">
                                 <input
-                                  type="text"
-                                  value={editStartTime}
-                                  onChange={(e) => setEditStartTime(e.target.value)}
-                                  placeholder="09:00 AM"
-                                  className="text-xs font-bold text-[#00696b] bg-[#00ced1]/15 border-2 border-[#1b1c19] px-2 py-1 rounded-none w-24 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19]"
-                                  title="Giờ Bắt Đầu"
+                                  type="time"
+                                  value={timeStringToHHMM(editStartTime)}
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      setEditStartTime(hhmmToTimeString(e.target.value));
+                                    }
+                                  }}
+                                  className="text-xs font-bold text-[#00696b] bg-[#00ced1]/15 border-2 border-[#1b1c19] px-2 py-1 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                  title="Chọn Giờ Bắt Đầu"
                                 />
                                 <span className="text-xs font-black text-[#1b1c19]">-</span>
                                 <input
-                                  type="text"
-                                  value={editEndTime}
-                                  onChange={(e) => setEditEndTime(e.target.value)}
-                                  placeholder="11:00 AM"
-                                  className="text-xs font-black text-[#00696b] bg-[#00ced1]/30 border-2 border-[#1b1c19] px-2 py-1 rounded-none w-24 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19]"
-                                  title="Giờ Kết Thúc"
+                                  type="time"
+                                  value={timeStringToHHMM(editEndTime)}
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      setEditEndTime(hhmmToTimeString(e.target.value));
+                                    }
+                                  }}
+                                  className="text-xs font-black text-[#00696b] bg-[#00ced1]/30 border-2 border-[#1b1c19] px-2 py-1 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                  title="Chọn Giờ Kết Thúc"
                                 />
                               </div>
                             </div>

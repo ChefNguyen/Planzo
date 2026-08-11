@@ -3,7 +3,7 @@ import { Itinerary, Activity } from '../types';
 import { MapPin, ArrowLeft, GripVertical, Clock } from 'lucide-react';
 import { GoogleMapView } from './GoogleMapView';
 import { getPlacePhoto } from '../lib/photoUtils';
-import { parseActivityTimeRange, formatActivityTimeRange } from '../lib/timeUtils';
+import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
 
 interface ItineraryMapViewProps {
   itinerary: Itinerary;
@@ -306,19 +306,27 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                                 <div className="flex items-center gap-1 sm:gap-1.5" onClick={(e) => e.stopPropagation()}>
                                   <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
                                   <input
-                                    type="text"
-                                    value={startTime}
-                                    onChange={(e) => handleTimeChange(act.id, e.target.value, endTime)}
-                                    className="text-[11px] font-headline font-black text-[#00696b] uppercase bg-[#00ced1]/15 border-2 border-[#1b1c19] px-1.5 sm:px-2 py-0.5 rounded-none w-[78px] sm:w-[84px] text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] transition-all"
-                                    title="Giờ Bắt Đầu (Nhấp để sửa)"
+                                    type="time"
+                                    value={timeStringToHHMM(startTime)}
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        handleTimeChange(act.id, hhmmToTimeString(e.target.value), endTime);
+                                      }
+                                    }}
+                                    className="text-[11px] font-headline font-black text-[#00696b] bg-[#00ced1]/15 border-2 border-[#1b1c19] px-1 py-0.5 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                    title="Chọn Giờ Bắt Đầu"
                                   />
                                   <span className="text-xs font-black text-[#1b1c19]">-</span>
                                   <input
-                                    type="text"
-                                    value={endTime}
-                                    onChange={(e) => handleTimeChange(act.id, startTime, e.target.value)}
-                                    className="text-[11px] font-headline font-black text-[#00696b] uppercase bg-[#00ced1]/30 border-2 border-[#1b1c19] px-1.5 sm:px-2 py-0.5 rounded-none w-[78px] sm:w-[84px] text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] transition-all"
-                                    title="Giờ Kết Thúc (Nhấp để sửa)"
+                                    type="time"
+                                    value={timeStringToHHMM(endTime)}
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        handleTimeChange(act.id, startTime, hhmmToTimeString(e.target.value));
+                                      }
+                                    }}
+                                    className="text-[11px] font-headline font-black text-[#00696b] bg-[#00ced1]/30 border-2 border-[#1b1c19] px-1 py-0.5 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                    title="Chọn Giờ Kết Thúc"
                                   />
                                 </div>
                               );
