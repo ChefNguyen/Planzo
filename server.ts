@@ -146,20 +146,43 @@ async function startServer() {
 
   // Helper function to extract number of requested days from dates or prompt string
   function extractRequestedDays(datesStr?: string, promptStr?: string): number {
-    if (datesStr) {
-      const dayMatch = datesStr.match(/(\d+)\s*days?/i);
-      if (dayMatch && dayMatch[1]) {
-        const parsed = parseInt(dayMatch[1], 10);
-        if (parsed >= 1 && parsed <= 14) return parsed;
-      }
+    const text = `${datesStr || ''} ${promptStr || ''}`;
+
+    // 1. Explicit "N days" or "N-day" match
+    const dayMatch = text.match(/(\d+)\s*[-_]?days?/i);
+    if (dayMatch && dayMatch[1]) {
+      const parsed = parseInt(dayMatch[1], 10);
+      if (parsed >= 1 && parsed <= 14) return parsed;
     }
-    if (promptStr) {
-      const promptMatch = promptStr.match(/(\d+)\s*[-_]?days?/i);
-      if (promptMatch && promptMatch[1]) {
-        const parsed = parseInt(promptMatch[1], 10);
-        if (parsed >= 1 && parsed <= 14) return parsed;
-      }
+
+    // 2. ISO Date Range YYYY-MM-DD to YYYY-MM-DD
+    const isoMatches = [...(datesStr || '').matchAll(/(\d{4})-(\d{1,2})-(\d{1,2})/g)];
+    if (isoMatches.length >= 2) {
+      const d1 = new Date(parseInt(isoMatches[0][1]), parseInt(isoMatches[0][2]) - 1, parseInt(isoMatches[0][3]));
+      const d2 = new Date(parseInt(isoMatches[1][1]), parseInt(isoMatches[1][2]) - 1, parseInt(isoMatches[1][3]));
+      const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
+      if (diffDays >= 1 && diffDays <= 14) return diffDays;
     }
+
+    // 3. English Month Date Range e.g. "Aug 15 - Aug 20"
+    const monthMap: Record<string, number> = {
+      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+    };
+    const monthMatches = [...(datesStr || '').matchAll(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/gi)];
+    if (monthMatches.length >= 2) {
+      const m1 = monthMap[monthMatches[0][1].toLowerCase().substring(0, 3)];
+      const day1 = parseInt(monthMatches[0][2], 10);
+      const m2 = monthMap[monthMatches[1][1].toLowerCase().substring(0, 3)];
+      const day2 = parseInt(monthMatches[1][2], 10);
+
+      const yr = new Date().getFullYear();
+      const d1 = new Date(yr, m1, day1);
+      const d2 = new Date(yr, m2, day2);
+      const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
+      if (diffDays >= 1 && diffDays <= 14) return diffDays;
+    }
+
     return 3;
   }
 

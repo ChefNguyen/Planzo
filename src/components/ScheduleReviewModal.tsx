@@ -282,7 +282,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                           {/* Item Quick Action Icons */}
                           <div className="flex items-center gap-1 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                             <a
-                              href={createGoogleCalendarUrl(itinerary.destination, act, day.dayNumber)}
+                              href={createGoogleCalendarUrl(itinerary, act, day.dayNumber)}
                               target="_blank"
                               rel="noreferrer"
                               className="p-2 text-[#6b7a7a] hover:text-[#00696b] transition-all rounded-none hover:bg-[#00ced1]/10 border border-transparent hover:border-[#1b1c19]"

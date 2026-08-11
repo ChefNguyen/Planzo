@@ -296,7 +296,7 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                               </span>
 
                               <a
-                                href={createGoogleCalendarUrl(itinerary.destination, act, currentDay.dayNumber)}
+                                href={createGoogleCalendarUrl(itinerary, act, currentDay.dayNumber)}
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}

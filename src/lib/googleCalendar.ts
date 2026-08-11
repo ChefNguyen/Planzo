@@ -10,23 +10,77 @@ function formatDateToIcsString(date: Date): string {
   return `${year}${month}${day}T${hours}${minutes}${seconds}`;
 }
 
+export function parseItineraryStartDate(itinerary: Partial<Itinerary> | string): Date {
+  if (typeof itinerary === 'object' && itinerary?.startDate) {
+    const parts = itinerary.startDate.split('-').map(Number);
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+  }
+
+  const str = typeof itinerary === 'string' ? itinerary : (itinerary?.dates || '');
+
+  // 1. ISO YYYY-MM-DD
+  const isoMatch = str.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const y = parseInt(isoMatch[1], 10);
+    const m = parseInt(isoMatch[2], 10) - 1;
+    const d = parseInt(isoMatch[3], 10);
+    return new Date(y, m, d);
+  }
+
+  // 2. DD/MM/YYYY
+  const dmyMatch = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (dmyMatch) {
+    const d = parseInt(dmyMatch[1], 10);
+    const m = parseInt(dmyMatch[2], 10) - 1;
+    const y = parseInt(dmyMatch[3], 10);
+    return new Date(y, m, d);
+  }
+
+  // 3. Month Day Year (e.g. "Aug 20, 2026" or "Aug 20 - Aug 23, 2026" or "Oct 15 - Oct 18")
+  const monthMap: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+  };
+  const monthMatch = str.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:[,\s]+(\d{4}))?/i);
+  if (monthMatch) {
+    const mStr = monthMatch[1].toLowerCase().substring(0, 3);
+    const m = monthMap[mStr] !== undefined ? monthMap[mStr] : 0;
+    const d = parseInt(monthMatch[2], 10);
+    let y = monthMatch[3] ? parseInt(monthMatch[3], 10) : new Date().getFullYear();
+
+    const now = new Date();
+    if (!monthMatch[3] && m < now.getMonth() && (now.getMonth() - m > 2)) {
+      y += 1;
+    }
+    return new Date(y, m, d);
+  }
+
+  const fallback = new Date();
+  fallback.setDate(fallback.getDate() + 1);
+  return fallback;
+}
+
 /**
  * Generates a Google Calendar event creation URL for a single given activity.
  */
 export function createGoogleCalendarUrl(
-  destination: string,
+  itineraryOrDestination: Itinerary | string,
   activity: Activity,
   dayNumber: number,
   baseStartDate?: Date
 ): string {
+  const destination = typeof itineraryOrDestination === 'string' ? itineraryOrDestination : itineraryOrDestination.destination;
   const title = encodeURIComponent(`[Planzo] ${activity.title} (${destination})`);
   const details = encodeURIComponent(
     `Day ${dayNumber} Activity in ${destination}\n\nVibe: ${activity.vibe}\nTime: ${activity.time}\n\nGenerated with Planzo AI Travel Itinerary Planner.`
   );
   const location = encodeURIComponent(activity.location || destination);
 
-  const startDate = baseStartDate ? new Date(baseStartDate) : new Date();
-  if (!baseStartDate) {
+  const parsedStart = typeof itineraryOrDestination === 'object' ? parseItineraryStartDate(itineraryOrDestination) : undefined;
+  const startDate = baseStartDate ? new Date(baseStartDate) : (parsedStart ? new Date(parsedStart) : new Date());
+  if (!baseStartDate && !parsedStart) {
     startDate.setDate(startDate.getDate() + dayNumber);
   } else {
     startDate.setDate(startDate.getDate() + (dayNumber - 1));
@@ -90,8 +144,7 @@ export function downloadItineraryIcs(itinerary: Itinerary): void {
     'METHOD:PUBLISH',
   ];
 
-  const baseDate = new Date();
-  baseDate.setDate(baseDate.getDate() + 1); // Start tomorrow
+  const baseDate = parseItineraryStartDate(itinerary);
 
   itinerary.days.forEach((day) => {
     day.activities.forEach((act, idx) => {
@@ -184,8 +237,7 @@ export async function syncItineraryToGoogleCalendarApi(
   itinerary: Itinerary,
   accessToken: string
 ): Promise<{ success: boolean; count: number; error?: string }> {
-  const baseDate = new Date();
-  baseDate.setDate(baseDate.getDate() + 1); // Start tomorrow
+  const baseDate = parseItineraryStartDate(itinerary);
 
   let syncedCount = 0;
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh';
