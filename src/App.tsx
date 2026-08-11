@@ -28,6 +28,7 @@ import {
 
 // Screen states for the Explore tab
 type ExploreScreen = 'home' | 'processing' | 'itinerary';
+type ItineraryReturnTab = 'explore' | 'my-trips' | 'community';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('explore');
@@ -53,6 +54,7 @@ export default function App() {
 
   // Single source of truth for Explore tab screen
   const [exploreScreen, setExploreScreen] = useState<ExploreScreen>('home');
+  const [itineraryReturnTab, setItineraryReturnTab] = useState<ItineraryReturnTab>('explore');
 
   // Review modal — only opened manually via "Review & Sync Schedule" button
   const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
@@ -159,6 +161,7 @@ export default function App() {
   const handleGenerateItinerary = async () => {
     setGenerateError(null);
     setShowReviewModal(false);
+    setItineraryReturnTab('explore');
     setExploreScreen('processing'); // ← Show AIProcessingModal immediately
     const startTime = Date.now();
     const MIN_DISPLAY_MS = 3600;
@@ -216,11 +219,11 @@ export default function App() {
     }
   };
 
-  const handleSelectTrip = (trip: Itinerary) => {
+  const handleSelectTrip = (trip: Itinerary, returnTab: ItineraryReturnTab = 'explore') => {
     setActiveItinerary(trip);
     setShowReviewModal(false);
+    setItineraryReturnTab(returnTab);
     setExploreScreen('itinerary');
-    setCurrentTab('explore');
   };
 
   const handleDeleteTrip = async (tripId: string) => {
@@ -264,21 +267,29 @@ export default function App() {
     setExploreScreen('home');
   };
 
+  const handleSelectTab = (tab: string) => {
+    setCurrentTab(tab);
+    setShowReviewModal(false);
+    setItineraryReturnTab('explore');
+
+    if (tab === 'explore') {
+      setExploreScreen('home');
+    } else if (exploreScreen === 'itinerary') {
+      setExploreScreen('home');
+    }
+  };
+
   // Derive destination/vibes for processing modal from whichever mode is active
   const processingDest = inputMode === 'structured' ? structuredForm.destination : promptForm.prompt;
   const processingVibes = inputMode === 'structured' ? structuredForm.selectedVibes : ['Custom AI Vibe'];
+  const isViewingItinerary = exploreScreen === 'itinerary' && !!activeItinerary;
 
   return (
     <div className="min-h-screen bg-[#fbf9f4] font-body text-[#1b1c19] flex flex-col transition-colors duration-300 selection:bg-[#00ced1] selection:text-[#005354]">
       {/* Header */}
       <Header
         currentTab={currentTab}
-        onSelectTab={(tab) => {
-          setCurrentTab(tab);
-          if (tab === 'explore' && !activeItinerary) {
-            setExploreScreen('home');
-          }
-        }}
+        onSelectTab={handleSelectTab}
         isCalendarConnected={isCalendarConnected}
         onToggleCalendar={handleToggleCalendar}
         currentUser={currentUser}
@@ -314,8 +325,21 @@ export default function App() {
           <AIProcessingModal destination={processingDest} vibes={processingVibes} />
         )}
 
+        {isViewingItinerary && activeItinerary && (
+          <ItineraryMapView
+            itinerary={activeItinerary}
+            onOpenReviewModal={() => setShowReviewModal(true)}
+            onBackToInput={() => {
+              setExploreScreen('home');
+              setShowReviewModal(false);
+              setCurrentTab(itineraryReturnTab);
+            }}
+            onUpdateItinerary={handleUpdateItinerary}
+          />
+        )}
+
         {/* ── Explore tab ── */}
-        {currentTab === 'explore' && exploreScreen !== 'processing' && (
+        {!isViewingItinerary && currentTab === 'explore' && exploreScreen !== 'processing' && (
           <>
             {/* Screen: Home input form */}
             {exploreScreen === 'home' && (
@@ -379,27 +403,14 @@ export default function App() {
                 )}
               </section>
             )}
-
-            {/* Screen: Itinerary Map */}
-            {exploreScreen === 'itinerary' && activeItinerary && (
-              <ItineraryMapView
-                itinerary={activeItinerary}
-                onOpenReviewModal={() => setShowReviewModal(true)}
-                onBackToInput={() => {
-                  setExploreScreen('home');
-                  setShowReviewModal(false);
-                }}
-                onUpdateItinerary={handleUpdateItinerary}
-              />
-            )}
           </>
         )}
 
         {/* ── My Trips tab ── */}
-        {currentTab === 'my-trips' && (
+        {!isViewingItinerary && currentTab === 'my-trips' && (
           <MyTripsView
             savedTrips={savedTrips}
-            onSelectTrip={handleSelectTrip}
+            onSelectTrip={(trip) => handleSelectTrip(trip, 'my-trips')}
             onDeleteTrip={handleDeleteTrip}
             onCreateNewTrip={() => {
               setCurrentTab('explore');
@@ -409,27 +420,24 @@ export default function App() {
         )}
 
         {/* ── Community tab ── */}
-        {currentTab === 'community' && (
-          <CommunityView trips={communityTrips} onSelectTrip={handleSelectTrip} />
+        {!isViewingItinerary && currentTab === 'community' && (
+          <CommunityView trips={communityTrips} onSelectTrip={(trip) => handleSelectTrip(trip, 'community')} />
         )}
 
         {/* ── Vibe Check tab ── */}
-        {currentTab === 'vibe-check' && (
+        {!isViewingItinerary && currentTab === 'vibe-check' && (
           <VibeCheckView onApplyVibe={handleApplyVibeFromCheck} />
         )}
 
         {/* ── Profile tab ── */}
-        {currentTab === 'profile' && (
+        {!isViewingItinerary && currentTab === 'profile' && (
           <ProfileView
             currentUser={currentUser}
             savedTrips={savedTrips}
             isCalendarConnected={isCalendarConnected}
             onToggleCalendar={() => setIsCalendarConnected(!isCalendarConnected)}
             onSelectTab={(tab) => {
-              setCurrentTab(tab);
-              if (tab === 'explore' && !activeItinerary) {
-                setExploreScreen('home');
-              }
+              handleSelectTab(tab);
             }}
             onSignOut={logoutUser}
             onSignIn={signInWithGoogle}

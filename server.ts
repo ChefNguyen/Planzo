@@ -129,15 +129,16 @@ async function startServer() {
     }
   });
 
-  // Custom Search Image Proxy Endpoint
+  // Custom Search Image Proxy Endpoint with CDN & In-Memory Caching
   app.get('/api/search-image', async (req, res) => {
     try {
       const query = (req.query.q as string) || '';
       if (!query) return res.json({ photoUrl: null });
-      let photoUrl = await fetchGoogleSearchPhoto(query);
-      if (!photoUrl) {
-        photoUrl = await fetchWikimediaPhoto(query);
-      }
+
+      // Cache HTTP response on CDN & Browser for 7 days
+      res.setHeader('Cache-Control', 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400');
+
+      const photoUrl = await fetchPhotoWithCache(query);
       return res.json({ photoUrl: photoUrl || null });
     } catch (err) {
       return res.json({ photoUrl: null });
@@ -320,8 +321,7 @@ CRITICAL LANGUAGE CONSISTENCY RULE:
               (d.activities || []).map(async (act: any, aIdx: number) => {
                 const placeInfo = await fetchPlaceDetails(act.title || 'Local Highlight', act.location || destName, idx * 4 + aIdx);
                 const searchQuery = cleanPhotoQuery(act.title || 'Local Highlight', destName);
-                const photoUrl = (await fetchGoogleSearchPhoto(searchQuery)) ||
-                  (await fetchPexelsPhoto(searchQuery, `${destName} travel`));
+                const photoUrl = await fetchPhotoWithCache(searchQuery, `${destName} travel`);
                 const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((act.title || 'Local Highlight') + ', ' + (act.location || destName))}`;
                 return {
                   id: `act-${idx + 1}-${aIdx + 1}-${Date.now()}`,
@@ -471,9 +471,7 @@ async function createFallbackItinerary(destination?: string, dates?: string, vib
           const globalIdx = idx * 2 + aIdx;
           const placeInfo = await fetchPlaceDetails(act.title, dest, globalIdx);
           const searchQuery = cleanPhotoQuery(act.title, dest);
-          const photoUrl =
-            (await fetchGoogleSearchPhoto(searchQuery)) ||
-            (await fetchPexelsPhoto(searchQuery, `${dest} travel`));
+          const photoUrl = await fetchPhotoWithCache(searchQuery, `${dest} travel`);
           const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.title + ', ' + dest)}`;
 
           return {
@@ -772,6 +770,60 @@ function cleanPhotoQuery(title: string, destination: string): string {
     .replace(/& Check-in/i, '')
     .trim();
   return `${cleanTitle || title} ${destination}`;
+}
+
+// In-Memory Photo Cache with 7-Day TTL and Request Coalescing
+interface PhotoCacheEntry {
+  url: string | undefined;
+  timestamp: number;
+}
+
+const photoCacheMap = new Map<string, PhotoCacheEntry>();
+const inFlightPhotoRequests = new Map<string, Promise<string | undefined>>();
+const PHOTO_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+async function fetchPhotoWithCache(query: string, destinationFallback?: string): Promise<string | undefined> {
+  const normalizedQuery = (query || '').toLowerCase().trim();
+  if (!normalizedQuery) return undefined;
+
+  // 1. Check Memory Cache
+  const cached = photoCacheMap.get(normalizedQuery);
+  if (cached && Date.now() - cached.timestamp < PHOTO_CACHE_TTL_MS) {
+    console.log(`[Photo Cache HIT ⚡] "${query}" ->`, cached.url);
+    return cached.url;
+  }
+
+  // 2. Request Coalescing (reuse pending HTTP request if concurrent)
+  if (inFlightPhotoRequests.has(normalizedQuery)) {
+    console.log(`[Photo Request Coalesce 🔄] "${query}" joining pending fetch`);
+    return inFlightPhotoRequests.get(normalizedQuery);
+  }
+
+  // 3. Perform Fetch Pipeline
+  const fetchPromise = (async () => {
+    try {
+      let photoUrl = await fetchGoogleSearchPhoto(query);
+      if (!photoUrl) {
+        photoUrl = await fetchWikimediaPhoto(query);
+      }
+      if (!photoUrl && destinationFallback) {
+        photoUrl = await fetchPexelsPhoto(query, destinationFallback);
+      }
+
+      // Cache result
+      photoCacheMap.set(normalizedQuery, {
+        url: photoUrl,
+        timestamp: Date.now(),
+      });
+
+      return photoUrl;
+    } finally {
+      inFlightPhotoRequests.delete(normalizedQuery);
+    }
+  })();
+
+  inFlightPhotoRequests.set(normalizedQuery, fetchPromise);
+  return fetchPromise;
 }
 
 startServer();

@@ -240,9 +240,16 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
   };
 
   const selectVibe = (vibe: string) => {
+    const isSelected = formData.selectedVibes.includes(vibe);
+    const selectedVibes = isSelected
+      ? formData.selectedVibes.filter((selected) => selected !== vibe)
+      : [...formData.selectedVibes, vibe];
+
+    if (selectedVibes.length === 0) return;
+
     onChange({
       ...formData,
-      selectedVibes: [vibe],
+      selectedVibes,
     });
   };
 

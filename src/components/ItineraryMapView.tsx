@@ -141,7 +141,7 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
             title="Quay lại tạo lịch trình mới"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-            <span>New Vibe</span>
+            <span>New Trip</span>
           </button>
 
           <div className="h-6 w-px bg-[#1b1c19]/30 shrink-0" />
