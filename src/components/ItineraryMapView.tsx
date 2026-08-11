@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Itinerary, Activity } from '../types';
-import { MapPin, Calendar, ArrowLeft, ExternalLink, GripVertical, Clock, Edit2, Check, X } from 'lucide-react';
+import { MapPin, ArrowLeft, GripVertical, Clock } from 'lucide-react';
 import { GoogleMapView } from './GoogleMapView';
-import { createGoogleCalendarUrl } from '../lib/googleCalendar';
 import { getPlacePhoto } from '../lib/photoUtils';
-import { parseActivityTimeRange, formatActivityTimeRange, calculateEndTimeFromStart } from '../lib/timeUtils';
+import { parseActivityTimeRange, formatActivityTimeRange } from '../lib/timeUtils';
 
 interface ItineraryMapViewProps {
   itinerary: Itinerary;
@@ -233,7 +232,6 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                 const isSelected = selectedActivityId === act.id;
                 const isBeingDragged = draggedActIndex === idx;
                 const isDragOverTarget = dragOverActIndex === idx;
-                const gmapsUrl = act.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.title + ', ' + (act.location || itinerary.destination))}`;
                 const photoUrl = getPlacePhoto(act, itinerary.destination);
 
                 return (
@@ -326,27 +324,14 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                               );
                             })()}
 
-                            {/* Action Buttons: Drag Handle & Add to Cal */}
-                            <div className="flex items-center gap-1.5">
-                              {/* Drag Handle for Mouse Reordering */}
+                            {/* Drag Handle for Mouse Reordering */}
+                            <div className="flex items-center">
                               <span
                                 className="p-1.5 text-[#a0afaf] hover:text-[#00696b] cursor-grab active:cursor-grabbing transition-colors"
                                 title="Kéo để đổi thứ tự địa điểm"
                               >
                                 <GripVertical className="w-4 h-4" />
                               </span>
-
-                              <a
-                                href={createGoogleCalendarUrl(itinerary, act, currentDay.dayNumber)}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-1.5 text-[#00696b] bg-white border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center gap-1 text-[11px] font-headline font-black uppercase ml-1"
-                                title="Add to Google Calendar"
-                              >
-                                <Calendar className="w-3.5 h-3.5 text-[#00696b]" />
-                                <span className="hidden sm:inline">Add to Cal</span>
-                              </a>
                             </div>
                           </div>
 
@@ -374,26 +359,12 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                             "{act.vibe}"
                           </p>
 
-                          <div className="flex flex-wrap items-center justify-between gap-2 mt-2 border-t pt-2 border-[#1b1c19]/15">
-                            {act.location ? (
-                              <div className="flex items-center gap-1 text-[11px] text-[#6b7a7a]">
-                                <MapPin className="w-3 h-3 text-[#00696b] shrink-0" />
-                                <span className="truncate max-w-[140px]">{act.location}</span>
-                              </div>
-                            ) : <div />}
-
-                            {/* Google Maps Link */}
-                            <a
-                              href={gmapsUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1 text-[11px] font-headline font-black uppercase text-[#00696b] hover:underline ml-auto"
-                            >
-                              <span>View on Google Maps</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
+                          {act.location && (
+                            <div className="flex items-center gap-1 text-[11px] text-[#6b7a7a] mt-2 border-t pt-2 border-[#1b1c19]/15">
+                              <MapPin className="w-3 h-3 text-[#00696b] shrink-0" />
+                              <span className="truncate">{act.location}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

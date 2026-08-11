@@ -226,9 +226,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                             <div className="space-y-2 bg-[#f9f8f4] p-3 border-2 border-[#1b1c19]">
                               <div className="flex items-center justify-between">
                                 <label className="text-[10px] font-headline font-black uppercase text-[#00696b] tracking-wider flex items-center gap-1">
-                                  <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Thời Gian Dừng (Start ➔ End Time)
+                                  <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Thời Gian Dừng
                                 </label>
-                                <span className="text-[10px] font-semibold text-[#5f6e6e]">Mặc định: 2 tiếng</span>
                               </div>
 
                               <div className="grid grid-cols-2 gap-2.5">
@@ -244,7 +243,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                                 </div>
 
                                 <div>
-                                  <label className="text-[10px] font-black uppercase text-[#00696b] block mb-0.5">Giờ Kết Thúc (End Time)</label>
+                                  <label className="text-[10px] font-black uppercase text-[#00696b] block mb-0.5">Giờ Kết Thúc</label>
                                   <input
                                     type="text"
                                     value={editEndTime}
@@ -257,7 +256,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
                               {/* Duration Shortcuts */}
                               <div className="flex items-center gap-1.5 pt-1">
-                                <span className="text-[10px] font-bold text-[#5f6e6e]">Tự động End Time:</span>
+                                <span className="text-[10px] font-bold text-[#5f6e6e]">Tự động:</span>
                                 <button
                                   type="button"
                                   onClick={() => handleApplyDurationPreset(1)}
