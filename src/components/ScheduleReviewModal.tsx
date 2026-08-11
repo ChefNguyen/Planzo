@@ -359,9 +359,9 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
             </div>
 
             {/* Right Column: Trip Summary Card Widget */}
-            <div className="lg:col-span-4 sticky top-0">
-              <div className="bg-white p-6 rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-5">
-                <div className="flex items-center justify-between border-b-2 border-[#1b1c19]/20 pb-3">
+            <div className="lg:col-span-4 lg:sticky lg:top-0">
+              <div className="bg-white p-5 sm:p-6 rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-4 max-h-[calc(80vh-100px)] overflow-y-auto custom-scrollbar">
+                <div className="flex items-center justify-between border-b-2 border-[#1b1c19]/20 pb-3 shrink-0">
                   <h5 className="font-headline font-black text-[#1b1c19] text-xs uppercase tracking-wider flex items-center gap-2">
                     <Map className="w-4 h-4 text-[#00696b]" /> Trip Summary
                   </h5>
@@ -370,52 +370,54 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   </span>
                 </div>
 
-                <div className="space-y-3.5">
-                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19]">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="p-1.5 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
                         <MapPin className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e]">Total Stops</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Total Stops</span>
                     </div>
-                    <span className="text-sm font-extrabold text-[#1b1c19]">{itinerary.totalStops}</span>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.totalStops}</span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19]">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
                         <Clock className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e]">Active Hours</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Active Hours</span>
                     </div>
-                    <span className="text-sm font-extrabold text-[#1b1c19]">{itinerary.activeHours} Hrs</span>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.activeHours} Hrs</span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19]">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="p-1.5 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
                         <Map className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e]">Region</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Region</span>
                     </div>
-                    <span className="text-xs font-extrabold text-[#1b1c19] truncate max-w-[110px]">{itinerary.region}</span>
+                    <span className="text-xs font-extrabold text-[#1b1c19] truncate text-right flex-1 pl-2" title={itinerary.region}>{itinerary.region}</span>
                   </div>
                 </div>
 
                 {/* Vibes Section */}
-                <div className="pt-3 border-t-2 border-[#1b1c19]/20">
-                  <p className="text-xs font-bold text-[#5f6e6e] mb-2.5">Vibes Included:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {itinerary.vibes.map((v, i) => (
-                      <span
-                        key={i}
-                        className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-3 py-1 rounded-none font-bold border border-[#1b1c19]"
-                      >
-                        {v}
-                      </span>
-                    ))}
+                {itinerary.vibes && itinerary.vibes.length > 0 && (
+                  <div className="pt-3 border-t-2 border-[#1b1c19]/20">
+                    <p className="text-xs font-bold text-[#5f6e6e] mb-2">Vibes Included ({itinerary.vibes.length}):</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                      {itinerary.vibes.map((v, i) => (
+                        <span
+                          key={i}
+                          className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-2.5 py-0.5 rounded-none font-bold border border-[#1b1c19] break-words"
+                        >
+                          {v}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -478,16 +480,6 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
             >
               Maybe Later
             </button>
-          </div>
-
-          {/* Progress Step Bar */}
-          <div className="mt-3 flex flex-col items-center justify-center gap-1.5">
-            <div className="h-2.5 w-full max-w-xs bg-[#1b1c19]/20 rounded-none border border-[#1b1c19] overflow-hidden">
-              <div className="h-full bg-[#00696b] transition-all duration-500" style={{ width: '100%' }} />
-            </div>
-            <p className="text-[10px] text-[#6b7a7a] uppercase tracking-widest font-extrabold flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 text-[#00696b]" /> Step 4 of 4: Final Confirmation
-            </p>
           </div>
 
         </div>
