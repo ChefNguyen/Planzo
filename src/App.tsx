@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, startTransition } from 'react';
 import { Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { Header } from './components/Header';
 import { StructuredInput } from './components/StructuredInput';
@@ -268,12 +268,16 @@ export default function App() {
   };
 
   const handleSelectTab = useCallback((tab: string) => {
-    setCurrentTab(tab);
-    setShowReviewModal(false);
-    setItineraryReturnTab('explore');
-    // Use functional setter so we don't need exploreScreen in deps
-    // (which would invalidate this callback and break React.memo on child views)
-    setExploreScreen((prev) => (tab === 'explore' || prev === 'itinerary' ? 'home' : prev));
+    // Wrap ALL state updates in startTransition:
+    // → The header button click registers instantly (urgent, outside transition)
+    // → Tab content renders asynchronously in the background (non-urgent)
+    // This is the correct React 18 pattern for instant-feeling tab switches.
+    startTransition(() => {
+      setCurrentTab(tab);
+      setShowReviewModal(false);
+      setItineraryReturnTab('explore');
+      setExploreScreen((prev) => (tab === 'explore' || prev === 'itinerary' ? 'home' : prev));
+    });
   }, []);
 
   const handleSelectTripFromMyTrips = useCallback((trip: Itinerary) => {
@@ -416,24 +420,23 @@ export default function App() {
           </>
         )}
 
-        {/* ── My Trips & Community tabs — always mounted, CSS display toggled for instant switching ── */}
-        <div className={!isViewingItinerary && currentTab === 'my-trips' ? 'block' : 'hidden'}>
+        {/* ── My Trips tab — conditional render so images only mount/fetch when visible ── */}
+        {!isViewingItinerary && currentTab === 'my-trips' && (
           <MyTripsView
             savedTrips={savedTrips}
             onSelectTrip={handleSelectTripFromMyTrips}
             onDeleteTrip={handleDeleteTrip}
             onCreateNewTrip={handleCreateNewTrip}
-            isVisible={!isViewingItinerary && currentTab === 'my-trips'}
           />
-        </div>
+        )}
 
-        <div className={!isViewingItinerary && currentTab === 'community' ? 'block' : 'hidden'}>
+        {/* ── Community tab — conditional render so images only mount/fetch when visible ── */}
+        {!isViewingItinerary && currentTab === 'community' && (
           <CommunityView
             trips={communityTrips}
             onSelectTrip={handleSelectTripFromCommunity}
-            isVisible={!isViewingItinerary && currentTab === 'community'}
           />
-        </div>
+        )}
 
         {/* ── Vibe Check tab ── */}
         {!isViewingItinerary && currentTab === 'vibe-check' && (
