@@ -131,16 +131,38 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Firebase Firestore User Trips & Community Trips listener
+  // Firebase Firestore User Trips & Community Trips listener + Guest LocalStorage Persistence
   useEffect(() => {
     let unsubUserTrips: (() => void) | undefined;
     if (currentUser) {
+      // Sync any guest trips generated before logging in to the user's account
+      const guestTripsRaw = localStorage.getItem('planzo_guest_saved_trips');
+      if (guestTripsRaw) {
+        try {
+          const guestTrips: Itinerary[] = JSON.parse(guestTripsRaw);
+          guestTrips.forEach((trip) => saveItineraryToFirestore(trip, currentUser.uid));
+          localStorage.removeItem('planzo_guest_saved_trips');
+        } catch (err) {
+          console.warn('Error syncing guest trips to user account:', err);
+        }
+      }
+
       unsubUserTrips = subscribeUserTrips(currentUser.uid, (trips) => {
-        // Wrap in startTransition so Firestore snapshot updates don't block tab interactions
         startTransition(() => setSavedTrips(trips));
       });
     } else {
-      setSavedTrips([]);
+      // Load saved guest trips from localStorage for Guest users
+      const guestTripsRaw = localStorage.getItem('planzo_guest_saved_trips');
+      if (guestTripsRaw) {
+        try {
+          const guestTrips: Itinerary[] = JSON.parse(guestTripsRaw);
+          startTransition(() => setSavedTrips(guestTrips));
+        } catch {
+          setSavedTrips([]);
+        }
+      } else {
+        setSavedTrips([]);
+      }
     }
 
     const unsubCommunity = subscribeCommunityTrips((trips) => {
@@ -164,12 +186,11 @@ export default function App() {
   //   (My Trips / Community select trip) ──────────────────┘
   // ─────────────────────────────────────────────────────────────────────────
   const handleGenerateItinerary = async () => {
+    setExploreScreen('processing');
     setGenerateError(null);
-    setShowReviewModal(false);
-    setItineraryReturnTab('explore');
-    setExploreScreen('processing'); // ← Show AIProcessingModal immediately
+
     const startTime = Date.now();
-    const MIN_DISPLAY_MS = 3600;
+    const MIN_DISPLAY_MS = 3800; // minimum display duration for processing modal animation
 
     try {
       const payload =
@@ -203,11 +224,19 @@ export default function App() {
 
       setActiveItinerary(data);
 
+      // Always save to savedTrips state & guest localStorage if not logged in
+      setSavedTrips((prev) => {
+        const updated = [data, ...prev.filter((t) => t.id !== data.id)];
+        if (!currentUser) {
+          localStorage.setItem('planzo_guest_saved_trips', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
       try {
         await saveItineraryToFirestore(data, currentUser?.uid);
       } catch (fsErr) {
         console.warn('Firestore save fallback:', fsErr);
-        setSavedTrips((prev) => [data, ...prev.filter((t) => t.id !== data.id)]);
       }
 
       // Keep processing screen visible for at least MIN_DISPLAY_MS so animation can complete
@@ -232,7 +261,14 @@ export default function App() {
   };
 
   const handleDeleteTrip = async (tripId: string) => {
-    setSavedTrips((prev) => prev.filter((t) => t.id !== tripId));
+    setSavedTrips((prev) => {
+      const updated = prev.filter((t) => t.id !== tripId);
+      if (!currentUser) {
+        localStorage.setItem('planzo_guest_saved_trips', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
     if (activeItinerary?.id === tripId) {
       setActiveItinerary(null);
       setExploreScreen('home');
@@ -246,7 +282,14 @@ export default function App() {
 
   const handleUpdateItinerary = async (updated: Itinerary) => {
     setActiveItinerary(updated);
-    setSavedTrips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setSavedTrips((prev) => {
+      const updatedList = prev.map((t) => (t.id === updated.id ? updated : t));
+      if (!currentUser) {
+        localStorage.setItem('planzo_guest_saved_trips', JSON.stringify(updatedList));
+      }
+      return updatedList;
+    });
+
     try {
       await saveItineraryToFirestore(updated, currentUser?.uid);
     } catch (err) {
