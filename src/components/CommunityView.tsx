@@ -68,7 +68,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                         className="w-8 h-8 bg-[#a43c12] text-white flex items-center justify-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]"
                         title="Trending Popular Itinerary"
                       >
-                        <Flame className="w-4 h-4 fill-white text-white animate-pulse" />
+                        <Flame className="w-4 h-4 fill-white text-white" />
                       </div>
                     </div>
                   </div>

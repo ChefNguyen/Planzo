@@ -12,20 +12,11 @@ const imageCache: Record<string, string> = {};
 
 export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, alt, className = '' }) => {
   const [photoUrl, setPhotoUrl] = useState<string>(() => imageCache[query] || getTripCoverPhoto(query));
-  const [loading, setLoading] = useState<boolean>(!imageCache[query]);
 
   useEffect(() => {
-    if (!query) return;
-
-    if (imageCache[query]) {
-      setPhotoUrl(imageCache[query]);
-      setLoading(false);
-      return;
-    }
+    if (!query || imageCache[query]) return;
 
     let isMounted = true;
-    setLoading(true);
-
     fetch(`/api/search-image?q=${encodeURIComponent(query)}`)
       .then((res) => res.json())
       .then((data) => {
@@ -34,12 +25,7 @@ export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, al
           setPhotoUrl(data.photoUrl);
         }
       })
-      .catch((err) => {
-        console.warn('[Google Custom Search] Image fetch failed:', err);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+      .catch(() => {});
 
     return () => {
       isMounted = false;
@@ -47,17 +33,12 @@ export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, al
   }, [query]);
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      {loading && (
-        <div className="absolute inset-0 bg-[#eae8e1] animate-pulse z-10 flex items-center justify-center">
-          <span className="text-[10px] font-bold text-[#00696b] tracking-wider uppercase opacity-75">
-            Google Photo...
-          </span>
-        </div>
-      )}
+    <div className={`relative overflow-hidden bg-[#e6e3d8] ${className}`}>
       <img
         src={photoUrl}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         onError={() => {
           setPhotoUrl(getTripCoverPhoto(query));
