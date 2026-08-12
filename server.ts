@@ -214,19 +214,18 @@ async function startServer() {
 
       let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots (specifying explicit Start Time - End Time with default duration of ~2 hours per stop, e.g. "09:00 AM - 11:00 AM", "01:30 PM - 03:30 PM"), iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.
 
-CRITICAL LANGUAGE CONSISTENCY RULE:
-- Detect the primary language of the user input/prompt or destination.
-- If the user writes in Vietnamese OR selects a Vietnamese destination (e.g. Quy Nhon, Da Nang, Ha Noi, Sai Gon, Phu Quoc, etc.), write 100% of ALL titles, vibe descriptions, day headings, and region names in VIETNAMESE.
-- Do NOT mix English and Vietnamese (e.g. do NOT write a Vietnamese title with an English vibe note). Keep 100% of all fields strictly in Vietnamese.`;
+CRITICAL MANDATORY LANGUAGE RULE:
+- ALWAYS write 100% of ALL titles, activity descriptions, vibe notes ("vibe" field), location details ("location" field), and day headings in VIETNAMESE (Tiếng Việt), regardless of whether the destination is in Vietnam or abroad (e.g., Tokyo, Paris, Rome, Kyoto, Da Nang, etc.) and regardless of whether input mode is Structured or AI Prompt Genius.
+- Do NOT output English for titles, activity descriptions, or vibe notes. Keep all generated textual prose strictly in natural, engaging Vietnamese (Tiếng Việt).`;
 
       let userPrompt = '';
       if (mode === 'prompt' && prompt) {
-        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary based on this prompt: "${prompt}". ${budgetText}. ${paceText}. Ensure the response contains exactly ${requestedDays} days in the "days" array.`;
+        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary based on this prompt: "${prompt}". ${budgetText}. ${paceText}. Write 100% of all activity titles, vibe notes, descriptions, and day titles in VIETNAMESE. Ensure the response contains exactly ${requestedDays} days in the "days" array.`;
       } else {
         const dest = destination || 'Tokyo, Japan';
         const d = dates || 'Upcoming Weekend';
         const v = Array.isArray(vibes) && vibes.length > 0 ? vibes.join(', ') : 'Adventure & Foodie';
-        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary for destination "${dest}" for dates "${d}" with the following vibes: "${v}". ${budgetText}. ${paceText}. The "days" array in the output MUST contain exactly ${requestedDays} items, numbered 1 to ${requestedDays}.`;
+        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary for destination "${dest}" for dates "${d}" with the following vibes: "${v}". ${budgetText}. ${paceText}. Write 100% of all activity titles, vibe notes, descriptions, and day titles in VIETNAMESE. The "days" array in the output MUST contain exactly ${requestedDays} items, numbered 1 to ${requestedDays}.`;
       }
 
       const modelsToTry = [
