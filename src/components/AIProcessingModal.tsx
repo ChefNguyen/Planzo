@@ -184,7 +184,7 @@ export const AIProcessingModal: React.FC<AIProcessingModalProps> = ({ destinatio
         {/* Live Reasoning Logs Container */}
         <div className="bg-[#1b1c19] text-[#f2f1ec] p-4 rounded-none border-2 border-[#1b1c19] font-mono text-xs max-h-36 overflow-y-auto space-y-1.5 shadow-[3px_3px_0px_0px_#00696b]">
           <div className="text-[#00ced1] font-bold mb-1 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-none bg-[#00ced1] animate-pulse" />
+            <span className="w-2 h-2 rounded-none bg-[#00ced1]" />
             <span>AI Reasoning Output</span>
           </div>
           {logs.map((l, i) => (

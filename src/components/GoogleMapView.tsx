@@ -386,7 +386,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
       {/* Bottom Map Watermark Badge */}
       <div className="absolute bottom-3 left-3 z-[1000] bg-white px-3 py-1.5 rounded-none border-2 border-[#1b1c19] text-[11px] font-headline font-black uppercase text-[#00696b] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center gap-2">
-        <span className="w-2 h-2 bg-[#00ced1] animate-pulse"></span>
+        <span className="w-2 h-2 bg-[#00ced1]"></span>
         <span>Interactive Map (CartoDB)</span>
       </div>
     </div>

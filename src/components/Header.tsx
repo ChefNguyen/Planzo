@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <span>{item.label}</span>
                   {isActive && (
-                    <span className="w-1.5 h-1.5 bg-white animate-pulse shrink-0" />
+                    <span className="w-1.5 h-1.5 bg-white shrink-0" />
                   )}
                 </button>
               );
@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Active Account Status Card */}
                 <div className="p-3 bg-[#00ced1]/15 border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="w-2.5 h-2.5 bg-[#00696b] animate-pulse border border-[#1b1c19] shrink-0" />
+                    <span className="w-2.5 h-2.5 bg-[#00696b] border border-[#1b1c19] shrink-0" />
                     <p className="text-xs font-headline font-black text-[#00696b] uppercase tracking-wider">
                       Google Calendar Active
                     </p>
