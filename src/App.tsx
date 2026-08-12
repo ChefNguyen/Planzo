@@ -423,6 +423,7 @@ export default function App() {
             onSelectTrip={handleSelectTripFromMyTrips}
             onDeleteTrip={handleDeleteTrip}
             onCreateNewTrip={handleCreateNewTrip}
+            isVisible={!isViewingItinerary && currentTab === 'my-trips'}
           />
         </div>
 
@@ -430,6 +431,7 @@ export default function App() {
           <CommunityView
             trips={communityTrips}
             onSelectTrip={handleSelectTripFromCommunity}
+            isVisible={!isViewingItinerary && currentTab === 'community'}
           />
         </div>
 

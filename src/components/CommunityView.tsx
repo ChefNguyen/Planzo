@@ -6,9 +6,10 @@ import { CustomSearchImage } from './CustomSearchImage';
 interface CommunityViewProps {
   trips: Itinerary[];
   onSelectTrip: (trip: Itinerary) => void;
+  isVisible?: boolean;
 }
 
-export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTrip }) => {
+export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTrip, isVisible = true }) => {
   const displayTrips = trips.slice(0, 9);
 
   return (
@@ -51,6 +52,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                       query={trip.destination || trip.region}
                       alt={trip.destination}
                       className="w-full h-full"
+                      isVisible={isVisible}
                     />
                     <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 

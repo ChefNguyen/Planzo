@@ -5,6 +5,7 @@ interface CustomSearchImageProps {
   query: string;
   alt: string;
   className?: string;
+  isVisible?: boolean; // Only fire the API fetch when the parent tab is actually visible
 }
 
 // Module-level caches — survive React unmount/remount cycles
@@ -12,11 +13,12 @@ const imageCache: Record<string, string> = {};
 // Deduplicates concurrent fetches for the same query key
 const pendingRequests: Record<string, Promise<void>> = {};
 
-export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, alt, className = '' }) => {
+export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, alt, className = '', isVisible = true }) => {
   const [photoUrl, setPhotoUrl] = useState<string>(() => imageCache[query] || getTripCoverPhoto(query));
 
   useEffect(() => {
-    if (!query || imageCache[query]) return;
+    // Don't fetch while the parent tab is hidden — wait until it becomes visible
+    if (!query || !isVisible || imageCache[query]) return;
 
     // If a fetch for this query is already in-flight, skip — it will populate the cache
     if (pendingRequests[query]) return;
@@ -44,7 +46,7 @@ export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, al
     return () => {
       isMounted = false;
     };
-  }, [query]);
+  }, [query, isVisible]);
 
   return (
     <div className={`relative overflow-hidden bg-[#e6e3d8] ${className}`}>

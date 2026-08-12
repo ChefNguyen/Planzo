@@ -8,6 +8,7 @@ interface MyTripsViewProps {
   onSelectTrip: (trip: Itinerary) => void;
   onDeleteTrip: (tripId: string) => void;
   onCreateNewTrip: () => void;
+  isVisible?: boolean;
 }
 
 const ITEMS_PER_PAGE = 4;
@@ -17,6 +18,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
   onSelectTrip,
   onDeleteTrip,
   onCreateNewTrip,
+  isVisible = true,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(savedTrips.length / ITEMS_PER_PAGE));
@@ -86,6 +88,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
                     query={trip.destination || trip.region}
                     alt={trip.destination}
                     className="w-full h-full"
+                    isVisible={isVisible}
                   />
                   <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
