@@ -1,4 +1,22 @@
 import { Itinerary, Activity } from '../types';
+import { auth } from './firebase';
+
+/**
+ * Returns a Google Calendar URL targeting the connected account's calendar.
+ * Uses the email stored in sessionStorage (gcal_account_email) if available,
+ * then falls back to the Firebase auth user's email, then bare calendar root.
+ */
+export function getGoogleCalendarUrl(email?: string | null): string {
+  const gcalEmail =
+    email ||
+    sessionStorage.getItem('gcal_account_email') ||
+    auth.currentUser?.email;
+
+  if (gcalEmail) {
+    return `https://calendar.google.com/calendar/u/${encodeURIComponent(gcalEmail)}/r`;
+  }
+  return 'https://calendar.google.com/calendar/r';
+}
 
 function formatDateToIcsString(date: Date): string {
   const year = date.getFullYear();
@@ -41,7 +59,7 @@ export function parseItineraryStartDate(itinerary: Partial<Itinerary> | string):
   // 3. Month Day Year (e.g. "Aug 20, 2026" or "Aug 20 - Aug 23, 2026" or "Oct 15 - Oct 18")
   const monthMap: Record<string, number> = {
     jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
   };
   const monthMatch = str.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:[,\s]+(\d{4}))?/i);
   if (monthMatch) {
@@ -51,7 +69,7 @@ export function parseItineraryStartDate(itinerary: Partial<Itinerary> | string):
     let y = monthMatch[3] ? parseInt(monthMatch[3], 10) : new Date().getFullYear();
 
     const now = new Date();
-    if (!monthMatch[3] && m < now.getMonth() && (now.getMonth() - m > 2)) {
+    if (!monthMatch[3] && m < now.getMonth() && now.getMonth() - m > 2) {
       y += 1;
     }
     return new Date(y, m, d);
@@ -64,6 +82,7 @@ export function parseItineraryStartDate(itinerary: Partial<Itinerary> | string):
 
 /**
  * Generates a Google Calendar event creation URL for a single given activity.
+ * Appends authuser param so the correct connected account is pre-selected.
  */
 export function createGoogleCalendarUrl(
   itineraryOrDestination: Itinerary | string,
@@ -71,15 +90,25 @@ export function createGoogleCalendarUrl(
   dayNumber: number,
   baseStartDate?: Date
 ): string {
-  const destination = typeof itineraryOrDestination === 'string' ? itineraryOrDestination : itineraryOrDestination.destination;
+  const destination =
+    typeof itineraryOrDestination === 'string'
+      ? itineraryOrDestination
+      : itineraryOrDestination.destination;
   const title = encodeURIComponent(`[Planzo] ${activity.title} (${destination})`);
   const details = encodeURIComponent(
     `Day ${dayNumber} Activity in ${destination}\n\nVibe: ${activity.vibe}\nTime: ${activity.time}\n\nGenerated with Planzo AI Travel Itinerary Planner.`
   );
   const location = encodeURIComponent(activity.location || destination);
 
-  const parsedStart = typeof itineraryOrDestination === 'object' ? parseItineraryStartDate(itineraryOrDestination) : undefined;
-  const startDate = baseStartDate ? new Date(baseStartDate) : (parsedStart ? new Date(parsedStart) : new Date());
+  const parsedStart =
+    typeof itineraryOrDestination === 'object'
+      ? parseItineraryStartDate(itineraryOrDestination)
+      : undefined;
+  const startDate = baseStartDate
+    ? new Date(baseStartDate)
+    : parsedStart
+    ? new Date(parsedStart)
+    : new Date();
   if (!baseStartDate && !parsedStart) {
     startDate.setDate(startDate.getDate() + dayNumber);
   } else {
@@ -127,7 +156,13 @@ export function createGoogleCalendarUrl(
   const startIso = formatDateToIcsString(dtStartObj);
   const endIso = formatDateToIcsString(dtEndObj);
 
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${startIso}/${endIso}`;
+  const gcalEmail =
+    sessionStorage.getItem('gcal_account_email') || auth.currentUser?.email;
+  const authUserParam = gcalEmail
+    ? `&authuser=${encodeURIComponent(gcalEmail)}`
+    : '';
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${startIso}/${endIso}${authUserParam}`;
 }
 
 /**
@@ -210,11 +245,16 @@ export function downloadItineraryIcs(itinerary: Itinerary): void {
 
   icsContent.push('END:VCALENDAR');
 
-  const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const blob = new Blob([icsContent.join('\r\n')], {
+    type: 'text/calendar;charset=utf-8',
+  });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', `Planzo_${itinerary.destination.replace(/\s+/g, '_')}_Schedule.ics`);
+  link.setAttribute(
+    'download',
+    `Planzo_${itinerary.destination.replace(/\s+/g, '_')}_Schedule.ics`
+  );
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -224,10 +264,16 @@ export function downloadItineraryIcs(itinerary: Itinerary): void {
 /**
  * Syncs the ENTIRE itinerary to Google Calendar by downloading the .ics file
  * and opening the Google Calendar Import page (Fallback).
+ * Targets the connected account if one is stored.
  */
 export function syncAllToGoogleCalendar(itinerary: Itinerary): void {
   downloadItineraryIcs(itinerary);
-  window.open('https://calendar.google.com/calendar/r/settings/export', '_blank');
+  const gcalEmail =
+    sessionStorage.getItem('gcal_account_email') || auth.currentUser?.email;
+  const base = gcalEmail
+    ? `https://calendar.google.com/calendar/u/${encodeURIComponent(gcalEmail)}/r/settings/export`
+    : 'https://calendar.google.com/calendar/r/settings/export';
+  window.open(base, '_blank');
 }
 
 /**
@@ -240,7 +286,8 @@ export async function syncItineraryToGoogleCalendarApi(
   const baseDate = parseItineraryStartDate(itinerary);
 
   let syncedCount = 0;
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh';
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh';
 
   try {
     for (const day of itinerary.days) {
@@ -328,5 +375,3 @@ export async function syncItineraryToGoogleCalendarApi(
     return { success: false, count: syncedCount, error: err.message };
   }
 }
-
-

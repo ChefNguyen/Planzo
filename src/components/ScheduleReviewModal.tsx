@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Itinerary, Activity } from '../types';
 import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
-import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi } from '../lib/googleCalendar';
+import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi, getGoogleCalendarUrl } from '../lib/googleCalendar';
 import { exportItineraryToPdf } from '../lib/exportPdf';
 import { signInWithGoogle, connectGoogleCalendarAccount, auth } from '../lib/firebase';
 import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
@@ -67,7 +67,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
       if (apiResult.success && apiResult.count > 0) {
         setSyncState('synced');
         setSyncNotice(`Đã tự động tạo trực tiếp ${apiResult.count} lịch trình vào Google Calendar (${gcalEmail || 'Tài khoản đã chọn'})!`);
-        window.open('https://calendar.google.com/calendar/r', '_blank');
+        window.open(getGoogleCalendarUrl(gcalEmail), '_blank');
         onConfirmSync();
         return;
       }

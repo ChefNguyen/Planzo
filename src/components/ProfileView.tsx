@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Itinerary } from '../types';
 import { User } from '../lib/firebase';
 import { CustomSearchImage } from './CustomSearchImage';
+import { getGoogleCalendarUrl } from '../lib/googleCalendar';
 import {
   User as UserIcon,
   Calendar,
@@ -357,7 +358,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     <div className="pt-2 border-t border-[#1b1c19]/20 flex items-center justify-between text-[11px]">
                       <span className="text-[#3b4949] font-medium">Auto-sync itinerary stops</span>
                       <a
-                        href="https://calendar.google.com"
+                        href={getGoogleCalendarUrl()}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[#00696b] font-bold hover:underline"

@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Unlink,
 } from 'lucide-react';
+import { getGoogleCalendarUrl } from '../lib/googleCalendar';
 import { User } from '../lib/firebase';
 
 interface HeaderProps {
@@ -156,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Actions */}
                 <div className="space-y-2">
                   <a
-                    href="https://calendar.google.com"
+                    href={getGoogleCalendarUrl()}
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => setIsCalendarMenuOpen(false)}
