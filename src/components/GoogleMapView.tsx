@@ -112,6 +112,13 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       }).setView([center.lat, center.lng], 13);
       mapInstanceRef.current = map;
 
+      // Force canvas recalculation to prevent blank map tiles
+      setTimeout(() => {
+        try {
+          map.invalidateSize();
+        } catch {}
+      }, 150);
+
       // Add zoom control to top-right
       L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -264,14 +271,11 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
     return () => {
       isSubscribed = false;
-      const map = mapInstanceRef.current;
-      if (map) {
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch {}
         mapInstanceRef.current = null;
-        setTimeout(() => {
-          try {
-            map.remove();
-          } catch {}
-        }, 0);
       }
     };
   }, [destination, activities]);

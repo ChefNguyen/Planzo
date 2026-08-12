@@ -1,4 +1,4 @@
-import React, { useState, useEffect, startTransition } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { Header } from './components/Header';
 import { StructuredInput } from './components/StructuredInput';
@@ -220,12 +220,10 @@ export default function App() {
   };
 
   const handleSelectTrip = (trip: Itinerary, returnTab: ItineraryReturnTab = 'explore') => {
-    startTransition(() => {
-      setActiveItinerary(trip);
-      setShowReviewModal(false);
-      setItineraryReturnTab(returnTab);
-      setExploreScreen('itinerary');
-    });
+    setActiveItinerary(trip);
+    setShowReviewModal(false);
+    setItineraryReturnTab(returnTab);
+    setExploreScreen('itinerary');
   };
 
   const handleDeleteTrip = async (tripId: string) => {
@@ -269,17 +267,28 @@ export default function App() {
     setExploreScreen('home');
   };
 
-  const handleSelectTab = (tab: string) => {
-    startTransition(() => {
-      setCurrentTab(tab);
-      setShowReviewModal(false);
-      setItineraryReturnTab('explore');
+  const handleSelectTab = useCallback((tab: string) => {
+    setCurrentTab(tab);
+    setShowReviewModal(false);
+    setItineraryReturnTab('explore');
 
-      if (tab === 'explore' || exploreScreen === 'itinerary') {
-        setExploreScreen('home');
-      }
-    });
-  };
+    if (tab === 'explore' || exploreScreen === 'itinerary') {
+      setExploreScreen('home');
+    }
+  }, [exploreScreen]);
+
+  const handleSelectTripFromMyTrips = useCallback((trip: Itinerary) => {
+    handleSelectTrip(trip, 'my-trips');
+  }, []);
+
+  const handleSelectTripFromCommunity = useCallback((trip: Itinerary) => {
+    handleSelectTrip(trip, 'community');
+  }, []);
+
+  const handleCreateNewTrip = useCallback(() => {
+    setCurrentTab('explore');
+    setExploreScreen('home');
+  }, []);
 
   // Derive destination/vibes for processing modal from whichever mode is active
   const processingDest = inputMode === 'structured' ? structuredForm.destination : promptForm.prompt;
@@ -412,18 +421,18 @@ export default function App() {
         {!isViewingItinerary && currentTab === 'my-trips' && (
           <MyTripsView
             savedTrips={savedTrips}
-            onSelectTrip={(trip) => handleSelectTrip(trip, 'my-trips')}
+            onSelectTrip={handleSelectTripFromMyTrips}
             onDeleteTrip={handleDeleteTrip}
-            onCreateNewTrip={() => {
-              setCurrentTab('explore');
-              setExploreScreen('home');
-            }}
+            onCreateNewTrip={handleCreateNewTrip}
           />
         )}
 
         {/* ── Community tab ── */}
         {!isViewingItinerary && currentTab === 'community' && (
-          <CommunityView trips={communityTrips} onSelectTrip={(trip) => handleSelectTrip(trip, 'community')} />
+          <CommunityView
+            trips={communityTrips}
+            onSelectTrip={handleSelectTripFromCommunity}
+          />
         )}
 
         {/* ── Vibe Check tab ── */}
