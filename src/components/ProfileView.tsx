@@ -27,6 +27,7 @@ interface ProfileViewProps {
   isCalendarConnected: boolean;
   onToggleCalendar: () => void;
   onSelectTab: (tab: string) => void;
+  onSelectTrip: (trip: Itinerary) => void;
   onSignOut: () => void;
   onSignIn: () => void;
 }
@@ -48,6 +49,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   isCalendarConnected,
   onToggleCalendar,
   onSelectTab,
+  onSelectTrip,
   onSignOut,
   onSignIn,
 }) => {
@@ -80,7 +82,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }));
   }, [currentUser]);
 
-  // Notifications toggle state persisted in localStorage
+  // Notifications toggle state persisted in localStorage + real Web Notifications API
   const [notifications, setNotifications] = useState(() => {
     const saved = localStorage.getItem('planzo_notifications');
     return saved
@@ -91,6 +93,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   useEffect(() => {
     localStorage.setItem('planzo_notifications', JSON.stringify(notifications));
   }, [notifications]);
+
+  const handleToggleNotification = (key: 'tripUpdates' | 'flightAlerts' | 'vibeCheckIns') => {
+    const nextValue = !notifications[key];
+    if (nextValue && typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission().catch(() => {});
+    }
+    setNotifications((n) => ({ ...n, [key]: nextValue }));
+  };
 
   // Expensify integration state persisted in localStorage
   const [isExpensifyConnected, setIsExpensifyConnected] = useState(() => {
@@ -357,24 +367,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
                   )}
                 </div>
-
-                {/* Expensify Row */}
-                <div className="p-3 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <CreditCard className="w-4 h-4 text-[#a43c12]" />
-                    <span className="text-xs font-bold text-[#1b1c19]">Expensify Sync</span>
-                  </div>
-                  <button
-                    onClick={toggleExpensify}
-                    className={`px-3 py-1 rounded-none text-[10px] font-headline font-black tracking-wider uppercase transition-all border-2 border-[#1b1c19] ${
-                      isExpensifyConnected
-                        ? 'bg-[#00ced1]/25 text-[#005354]'
-                        : 'text-[#00696b] font-bold hover:underline'
-                    }`}
-                  >
-                    {isExpensifyConnected ? 'ACTIVE ✓' : 'Connect'}
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -393,9 +385,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1b1c19]">Trip Updates</span>
                 <button
-                  onClick={() =>
-                    setNotifications((n: any) => ({ ...n, tripUpdates: !n.tripUpdates }))
-                  }
+                  onClick={() => handleToggleNotification('tripUpdates')}
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.tripUpdates ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
@@ -412,9 +402,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1b1c19]">Flight Alerts</span>
                 <button
-                  onClick={() =>
-                    setNotifications((n: any) => ({ ...n, flightAlerts: !n.flightAlerts }))
-                  }
+                  onClick={() => handleToggleNotification('flightAlerts')}
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.flightAlerts ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
@@ -431,9 +419,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1b1c19]">Vibe Check-ins</span>
                 <button
-                  onClick={() =>
-                    setNotifications((n: any) => ({ ...n, vibeCheckIns: !n.vibeCheckIns }))
-                  }
+                  onClick={() => handleToggleNotification('vibeCheckIns')}
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.vibeCheckIns ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
@@ -498,7 +484,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             {savedTrips.slice(0, 3).map((trip) => (
               <div
                 key={trip.id}
-                onClick={() => onSelectTab('my-trips')}
+                onClick={() => onSelectTrip(trip)}
                 className="bg-white rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] hover:-translate-y-0.5 transition-all cursor-pointer group flex flex-col justify-between overflow-hidden"
               >
                 <div>

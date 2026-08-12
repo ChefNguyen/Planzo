@@ -28,7 +28,7 @@ import {
 
 // Screen states for the Explore tab
 type ExploreScreen = 'home' | 'processing' | 'itinerary';
-type ItineraryReturnTab = 'explore' | 'my-trips' | 'community';
+type ItineraryReturnTab = 'explore' | 'my-trips' | 'community' | 'profile';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('explore');
@@ -293,6 +293,10 @@ export default function App() {
     handleSelectTrip(trip, 'community');
   }, []);
 
+  const handleSelectTripFromProfile = useCallback((trip: Itinerary) => {
+    handleSelectTrip(trip, 'profile');
+  }, []);
+
   const handleCreateNewTrip = useCallback(() => {
     setCurrentTab('explore');
     setExploreScreen('home');
@@ -458,6 +462,7 @@ export default function App() {
             onSelectTab={(tab) => {
               handleSelectTab(tab);
             }}
+            onSelectTrip={handleSelectTripFromProfile}
             onSignOut={logoutUser}
             onSignIn={signInWithGoogle}
           />
