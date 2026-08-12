@@ -60,6 +60,17 @@ const AVAILABLE_VIBES = [
   'Romantic',
 ];
 
+const SUGGESTED_CUSTOM_VIBES = [
+  '✨ Anime & Manga',
+  '☕ Specialty Coffee',
+  '📷 Photography',
+  '🛍️ Vintage & Thrift',
+  '⛺ Glamping & Camp',
+  '🍷 Wine & Jazz',
+  '🥐 Local Bakeries',
+  '🌿 Eco-Tourism',
+];
+
 export const StructuredInput: React.FC<StructuredInputProps> = ({
   formData,
   onChange,
@@ -239,6 +250,8 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
     }
   };
 
+  const [customVibes, setCustomVibes] = useState<string[]>([]);
+
   const selectVibe = (vibe: string) => {
     const isSelected = formData.selectedVibes.includes(vibe);
     const selectedVibes = isSelected
@@ -253,15 +266,31 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
     });
   };
 
-  const handleAddCustomVibe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (customVibeInput.trim() && !formData.selectedVibes.includes(customVibeInput.trim())) {
+  const handleAddCustomVibe = (e?: React.FormEvent, vibeText?: string) => {
+    if (e) e.preventDefault();
+    const target = (vibeText || customVibeInput).trim();
+    if (!target) return;
+
+    if (!customVibes.includes(target) && !AVAILABLE_VIBES.includes(target)) {
+      setCustomVibes((prev) => [...prev, target]);
+    }
+
+    if (!formData.selectedVibes.includes(target)) {
       onChange({
         ...formData,
-        selectedVibes: [...formData.selectedVibes, customVibeInput.trim()],
+        selectedVibes: [...formData.selectedVibes, target],
       });
-      setCustomVibeInput('');
     }
+
+    setCustomVibeInput('');
+  };
+
+  const handleRemoveCustomVibe = (vibeToRemove: string) => {
+    setCustomVibes((prev) => prev.filter((v) => v !== vibeToRemove));
+    onChange({
+      ...formData,
+      selectedVibes: formData.selectedVibes.filter((v) => v !== vibeToRemove),
+    });
   };
 
   const currentDurationInfo = calculateDuration(fromDate, toDate);
@@ -528,6 +557,7 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
           Select your travel vibes ({formData.selectedVibes.length} selected)
         </p>
         <div className="flex flex-wrap gap-2.5">
+          {/* Standard Vibes */}
           {AVAILABLE_VIBES.slice(0, showMoreVibes ? AVAILABLE_VIBES.length : 5).map((vibe) => {
             const isSelected = formData.selectedVibes.includes(vibe);
             return (
@@ -535,13 +565,45 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                 key={vibe}
                 type="button"
                 onClick={() => selectVibe(vibe)}
-                className={`px-5 py-2.5 rounded-none border-2 border-[#1b1c19] transition-all font-headline font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${isSelected
+                className={`px-5 py-2.5 rounded-none border-2 border-[#1b1c19] transition-all font-headline font-black text-xs uppercase tracking-wider flex items-center gap-1.5 ${
+                  isSelected
                     ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
                     : 'bg-white text-[#1b1c19] hover:bg-[#f5f3ee]'
-                  }`}
+                }`}
               >
                 <span>{vibe}</span>
               </button>
+            );
+          })}
+
+          {/* User Custom Vibes */}
+          {customVibes.map((vibe) => {
+            const isSelected = formData.selectedVibes.includes(vibe);
+            return (
+              <div
+                key={vibe}
+                className={`inline-flex items-center gap-1 px-4 py-2.5 rounded-none border-2 border-[#1b1c19] transition-all font-headline font-black text-xs uppercase tracking-wider ${
+                  isSelected
+                    ? 'bg-[#a43c12] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                    : 'bg-[#f0eee6] text-[#1b1c19]'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => selectVibe(vibe)}
+                  className="flex items-center gap-1 hover:opacity-90"
+                >
+                  <span>{vibe}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCustomVibe(vibe)}
+                  className="ml-1 p-0.5 hover:bg-black/20 rounded-none text-current transition-colors"
+                  title="Remove Custom Vibe"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             );
           })}
 
@@ -550,27 +612,61 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
             onClick={() => setShowMoreVibes(!showMoreVibes)}
             className="px-5 py-2.5 rounded-none border-2 border-[#1b1c19] text-[#00696b] font-headline font-black text-xs uppercase tracking-wider hover:bg-[#00ced1]/10 transition-all flex items-center gap-1 bg-white"
           >
-            <span>{showMoreVibes ? 'Show Less' : '+ More Vibes'}</span>
+            <span>{showMoreVibes ? 'Show Less' : '+ Custom Vibe'}</span>
           </button>
         </div>
 
-        {/* Custom vibe input form */}
+        {/* Custom Vibe Input & Suggestions Drawer */}
         {showMoreVibes && (
-          <form onSubmit={handleAddCustomVibe} className="mt-4 flex gap-2 max-w-md">
-            <input
-              type="text"
-              value={customVibeInput}
-              onChange={(e) => setCustomVibeInput(e.target.value)}
-              placeholder="Add custom vibe (e.g. Anime, Vintage Shops)"
-              className="flex-1 px-4 py-2 bg-white border-2 border-[#1b1c19] text-sm font-medium text-[#1b1c19] placeholder:text-[#6b7a7a] rounded-none focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-[#00696b] text-white rounded-none text-xs font-bold border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]"
-            >
-              Add
-            </button>
-          </form>
+          <div className="mt-4 p-4 bg-[#fbf9f4] border-2 border-[#1b1c19] rounded-none space-y-3">
+            <label className="block text-xs font-headline font-black tracking-wider text-[#00696b] uppercase">
+              Add Custom Vibe Note
+            </label>
+            
+            <form onSubmit={(e) => handleAddCustomVibe(e)} className="flex gap-2 max-w-md">
+              <input
+                type="text"
+                value={customVibeInput}
+                onChange={(e) => setCustomVibeInput(e.target.value)}
+                placeholder="e.g. Anime Shops, Coffee Tasting, Glamping"
+                maxLength={30}
+                className="flex-1 px-4 py-2 bg-white border-2 border-[#1b1c19] text-sm font-medium text-[#1b1c19] placeholder:text-[#6b7a7a] rounded-none focus:outline-none focus:ring-2 focus:ring-[#00696b]"
+              />
+              <button
+                type="submit"
+                disabled={!customVibeInput.trim()}
+                className="px-5 py-2 bg-[#a43c12] text-white rounded-none text-xs font-headline font-black uppercase border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] disabled:opacity-50 transition-all"
+              >
+                + Add Vibe
+              </button>
+            </form>
+
+            {/* Quick Suggestion Chips */}
+            <div className="pt-2">
+              <p className="text-[11px] font-bold text-[#6b7a7a] uppercase mb-2">
+                Quick Suggestions:
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {SUGGESTED_CUSTOM_VIBES.map((chip) => {
+                  const isAdded = customVibes.includes(chip) || formData.selectedVibes.includes(chip);
+                  return (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => handleAddCustomVibe(undefined, chip)}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-none border border-[#1b1c19]/40 transition-all ${
+                        isAdded
+                          ? 'bg-[#00696b] text-white border-[#1b1c19]'
+                          : 'bg-white text-[#3b4949] hover:bg-[#f5f3ee]'
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
