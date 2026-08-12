@@ -87,14 +87,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const saved = localStorage.getItem('planzo_notifications');
     return saved
       ? JSON.parse(saved)
-      : { tripUpdates: true, flightAlerts: true, vibeCheckIns: false };
+      : { tripUpdates: true, calendarAlerts: true, vibeCheckIns: false };
   });
 
   useEffect(() => {
     localStorage.setItem('planzo_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
-  const handleToggleNotification = (key: 'tripUpdates' | 'flightAlerts' | 'vibeCheckIns') => {
+  const handleToggleNotification = (key: 'tripUpdates' | 'calendarAlerts' | 'vibeCheckIns') => {
     const nextValue = !notifications[key];
     if (nextValue && typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
       Notification.requestPermission().catch(() => {});
@@ -398,18 +398,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </button>
               </div>
 
-              {/* Flight Alerts */}
+              {/* Calendar Alerts */}
               <div className="p-3.5 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
-                <span className="text-xs font-bold text-[#1b1c19]">Flight Alerts</span>
+                <span className="text-xs font-bold text-[#1b1c19]">Calendar Alerts</span>
                 <button
-                  onClick={() => handleToggleNotification('flightAlerts')}
+                  onClick={() => handleToggleNotification('calendarAlerts')}
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
-                    notifications.flightAlerts ? 'bg-[#00696b]' : 'bg-gray-300'
+                    notifications.calendarAlerts ? 'bg-[#00696b]' : 'bg-gray-300'
                   }`}
                 >
                   <div
                     className={`bg-white w-4 h-4 rounded-none border border-[#1b1c19] shadow-xs transform transition-transform duration-200 ${
-                      notifications.flightAlerts ? 'translate-x-4' : 'translate-x-0'
+                      notifications.calendarAlerts ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
                 </button>
