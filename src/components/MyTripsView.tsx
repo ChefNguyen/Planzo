@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Itinerary } from '../types';
-import { MapPin, Calendar, Clock, ArrowRight, Trash2, Sparkles, Ticket, Compass } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowRight, Trash2, Sparkles, Ticket, Compass, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomSearchImage } from './CustomSearchImage';
 
 interface MyTripsViewProps {
@@ -10,12 +10,26 @@ interface MyTripsViewProps {
   onCreateNewTrip: () => void;
 }
 
+const ITEMS_PER_PAGE = 4;
+
 export const MyTripsView = React.memo<MyTripsViewProps>(({
   savedTrips,
   onSelectTrip,
   onDeleteTrip,
   onCreateNewTrip,
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(savedTrips.length / ITEMS_PER_PAGE));
+
+  // Reset page if total trips reduced below current page bounds
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [savedTrips.length, totalPages, currentPage]);
+
+  const currentTrips = savedTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 min-h-[70vh]">
       {/* Header Section */}
@@ -30,7 +44,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
             <Compass className="w-6 h-6 text-[#a43c12]" />
           </h2>
           <p className="text-sm text-[#3b4949] mt-1">
-            Your personal passport of saved AI-generated travel itineraries.
+            Your personal passport of saved AI-generated travel itineraries ({savedTrips.length} total).
           </p>
         </div>
 
@@ -60,7 +74,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {savedTrips.map((trip) => {
+          {currentTrips.map((trip) => {
             return (
               <div
                 key={trip.id}
@@ -149,6 +163,47 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Neobrutalist Pagination Bar (Max 4 items per page) */}
+      {savedTrips.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between sm:justify-center gap-3 mt-8 pt-6 border-t-2 border-[#1b1c19]/20">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => {
+              setCurrentPage((prev) => Math.max(1, prev - 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`px-4 py-2.5 font-headline font-black text-xs uppercase flex items-center gap-1.5 border-2 border-[#1b1c19] rounded-none transition-all ${
+              currentPage === 1
+                ? 'bg-[#e5e2d8] text-[#9ba8a8] cursor-not-allowed border-[#1b1c19]/30 opacity-60'
+                : 'bg-white text-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] hover:bg-[#00ced1]/20 hover:-translate-x-0.5 hover:-translate-y-0.5'
+            }`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Prev</span>
+          </button>
+
+          <div className="px-4 py-2.5 bg-[#a43c12] text-white font-headline font-black text-xs uppercase tracking-wider border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] flex items-center gap-2">
+            <span>Page {currentPage} of {totalPages}</span>
+          </div>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => {
+              setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`px-4 py-2.5 font-headline font-black text-xs uppercase flex items-center gap-1.5 border-2 border-[#1b1c19] rounded-none transition-all ${
+              currentPage === totalPages
+                ? 'bg-[#e5e2d8] text-[#9ba8a8] cursor-not-allowed border-[#1b1c19]/30 opacity-60'
+                : 'bg-white text-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] hover:bg-[#00ced1]/20 hover:-translate-x-0.5 hover:-translate-y-0.5'
+            }`}
+          >
+            <span>Next</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>

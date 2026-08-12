@@ -9,24 +9,26 @@ interface CommunityViewProps {
 }
 
 export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTrip }) => {
+  const displayTrips = trips.slice(0, 12);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 min-h-[70vh]">
       {/* Header Section */}
       <div className="mb-8">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#a43c12]/10 text-[#a43c12] text-xs font-headline font-black uppercase tracking-wider mb-2 border border-[#a43c12]/30 rounded-none">
           <Globe className="w-3.5 h-3.5" />
-          <span>{trips.length} Trending Curations</span>
+          <span>Top {displayTrips.length} Trending Curations</span>
         </div>
         <h2 className="font-headline font-extrabold text-3xl text-[#00696b] flex items-center gap-2">
           <span>Community Vibe Vault</span>
           <Globe className="w-6 h-6 text-[#a43c12]" />
         </h2>
         <p className="text-sm text-[#3b4949] mt-1">
-          Explore trending AI itineraries created by travelers around the globe.
+          Explore top trending AI itineraries created by travelers around the globe.
         </p>
       </div>
 
-      {trips.length === 0 ? (
+      {displayTrips.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center gap-4 opacity-70">
           <Globe className="w-16 h-16 text-[#bac9c9]" />
           <h3 className="font-headline font-bold text-xl text-[#3b4949]">No community trips yet</h3>
@@ -36,7 +38,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trips.map((trip) => {
+          {displayTrips.map((trip) => {
             return (
               <div
                 key={trip.id}
