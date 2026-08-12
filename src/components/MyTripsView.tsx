@@ -10,7 +10,7 @@ interface MyTripsViewProps {
   onCreateNewTrip: () => void;
 }
 
-export const MyTripsView: React.FC<MyTripsViewProps> = ({
+export const MyTripsView = React.memo<MyTripsViewProps>(({
   savedTrips,
   onSelectTrip,
   onDeleteTrip,
@@ -153,4 +153,4 @@ export const MyTripsView: React.FC<MyTripsViewProps> = ({
       )}
     </div>
   );
-};
+});

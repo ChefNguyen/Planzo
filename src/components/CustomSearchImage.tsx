@@ -10,7 +10,7 @@ interface CustomSearchImageProps {
 // Global in-memory cache for fetched Custom Search photos
 const imageCache: Record<string, string> = {};
 
-export const CustomSearchImage: React.FC<CustomSearchImageProps> = ({ query, alt, className = '' }) => {
+export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, alt, className = '' }) => {
   const [photoUrl, setPhotoUrl] = useState<string>(() => imageCache[query] || getTripCoverPhoto(query));
   const [loading, setLoading] = useState<boolean>(!imageCache[query]);
 
@@ -65,4 +65,4 @@ export const CustomSearchImage: React.FC<CustomSearchImageProps> = ({ query, alt
       />
     </div>
   );
-};
+});

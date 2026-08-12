@@ -264,9 +264,14 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
     return () => {
       isSubscribed = false;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+      const map = mapInstanceRef.current;
+      if (map) {
         mapInstanceRef.current = null;
+        setTimeout(() => {
+          try {
+            map.remove();
+          } catch {}
+        }, 0);
       }
     };
   }, [destination, activities]);

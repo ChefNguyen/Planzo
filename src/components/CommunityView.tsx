@@ -8,7 +8,7 @@ interface CommunityViewProps {
   onSelectTrip: (trip: Itinerary) => void;
 }
 
-export const CommunityView: React.FC<CommunityViewProps> = ({ trips, onSelectTrip }) => {
+export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTrip }) => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 min-h-[70vh]">
       {/* Header Section */}
@@ -119,4 +119,4 @@ export const CommunityView: React.FC<CommunityViewProps> = ({ trips, onSelectTri
       )}
     </div>
   );
-};
+});

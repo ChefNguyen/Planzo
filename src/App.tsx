@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import { Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { Header } from './components/Header';
 import { StructuredInput } from './components/StructuredInput';
@@ -220,10 +220,12 @@ export default function App() {
   };
 
   const handleSelectTrip = (trip: Itinerary, returnTab: ItineraryReturnTab = 'explore') => {
-    setActiveItinerary(trip);
-    setShowReviewModal(false);
-    setItineraryReturnTab(returnTab);
-    setExploreScreen('itinerary');
+    startTransition(() => {
+      setActiveItinerary(trip);
+      setShowReviewModal(false);
+      setItineraryReturnTab(returnTab);
+      setExploreScreen('itinerary');
+    });
   };
 
   const handleDeleteTrip = async (tripId: string) => {
@@ -268,15 +270,15 @@ export default function App() {
   };
 
   const handleSelectTab = (tab: string) => {
-    setCurrentTab(tab);
-    setShowReviewModal(false);
-    setItineraryReturnTab('explore');
+    startTransition(() => {
+      setCurrentTab(tab);
+      setShowReviewModal(false);
+      setItineraryReturnTab('explore');
 
-    if (tab === 'explore') {
-      setExploreScreen('home');
-    } else if (exploreScreen === 'itinerary') {
-      setExploreScreen('home');
-    }
+      if (tab === 'explore' || exploreScreen === 'itinerary') {
+        setExploreScreen('home');
+      }
+    });
   };
 
   // Derive destination/vibes for processing modal from whichever mode is active
