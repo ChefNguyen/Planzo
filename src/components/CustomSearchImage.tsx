@@ -17,24 +17,38 @@ export const CustomSearchImage = React.memo<CustomSearchImageProps>(({ query, al
   const [photoUrl, setPhotoUrl] = useState<string>(() => imageCache[query] || getTripCoverPhoto(query));
 
   useEffect(() => {
-    // Don't fetch while the parent tab is hidden — wait until it becomes visible
-    if (!query || !isVisible || imageCache[query]) return;
+    if (!query || !isVisible) return;
 
-    // If a fetch for this query is already in-flight, skip — it will populate the cache
-    if (pendingRequests[query]) return;
+    // Bug fix 1: If cache was already populated by ANOTHER component while this
+    // one was hidden, sync the cached URL to our local state now that we're visible.
+    if (imageCache[query]) {
+      if (imageCache[query] !== photoUrl) {
+        startTransition(() => setPhotoUrl(imageCache[query]));
+      }
+      return;
+    }
 
     let isMounted = true;
 
+    // Bug fix 2: If another component is already fetching the same query,
+    // attach to the same promise so we also pick up the result when it resolves.
+    if (pendingRequests[query]) {
+      pendingRequests[query].then(() => {
+        if (isMounted && imageCache[query]) {
+          startTransition(() => setPhotoUrl(imageCache[query]));
+        }
+      });
+      return () => { isMounted = false; };
+    }
+
+    // No cache, no in-flight request — start a new fetch
     pendingRequests[query] = fetch(`/api/search-image?q=${encodeURIComponent(query)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.photoUrl) {
           imageCache[query] = data.photoUrl;
-          // Defer the state update so it never blocks tab switching or user interactions
           if (isMounted) {
-            startTransition(() => {
-              setPhotoUrl(data.photoUrl);
-            });
+            startTransition(() => setPhotoUrl(data.photoUrl));
           }
         }
       })
