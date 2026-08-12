@@ -405,98 +405,97 @@ export default function App() {
         )}
 
         {/* ── Explore tab ── */}
-        {!isViewingItinerary && currentTab === 'explore' && exploreScreen !== 'processing' && (
-          <>
-            {/* Screen: Home input form */}
-            {exploreScreen === 'home' && (
-              <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-0 pt-4">
-                <div className="mb-8 text-left space-y-3">
-                  <div className="inline-flex items-center gap-3 p-1.5 pr-4 bg-white border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] rounded-none transition-transform hover:-translate-y-0.5 hover:-translate-x-0.5">
-                    <div className="px-3 py-1 rounded-none bg-[#a43c12] text-white flex items-center gap-1.5 font-headline font-black text-[10px] sm:text-[11px] tracking-wider uppercase border border-[#1b1c19]">
-                      <Sparkles className="w-3.5 h-3.5 fill-current" />
-                      <span>PLANZO AI</span>
-                    </div>
-                    <span className="text-xs font-headline font-black tracking-widest uppercase text-[#00696b]">
-                      Travel Discovery
-                    </span>
+        <div className={!isViewingItinerary && currentTab === 'explore' && exploreScreen !== 'processing' ? 'block' : 'hidden'}>
+          {/* Screen: Home input form */}
+          {exploreScreen === 'home' && (
+            <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-0 pt-4">
+              <div className="mb-8 text-left space-y-3">
+                <div className="inline-flex items-center gap-3 p-1.5 pr-4 bg-white border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] rounded-none transition-transform hover:-translate-y-0.5 hover:-translate-x-0.5">
+                  <div className="px-3 py-1 rounded-none bg-[#a43c12] text-white flex items-center gap-1.5 font-headline font-black text-[10px] sm:text-[11px] tracking-wider uppercase border border-[#1b1c19]">
+                    <Sparkles className="w-3.5 h-3.5 fill-current" />
+                    <span>PLANZO AI</span>
                   </div>
-
-                  <h1 className="font-headline font-extrabold text-4xl sm:text-5xl lg:text-6xl text-[#00696b] max-w-3xl leading-[1.1] tracking-tight">
-                    Where does your{' '}
-                    <span className="text-[#a43c12] italic font-serif">
-                      vibe
-                    </span>{' '}
-                    want to go?
-                  </h1>
-
-                  <p className="text-base sm:text-lg text-[#3b4949] max-w-2xl leading-relaxed">
-                    Tell Planzo your dream mood, obscure interests, or aesthetic goals. We'll handle the logistics of your next escape.
-                  </p>
+                  <span className="text-xs font-headline font-black tracking-widest uppercase text-[#00696b]">
+                    Travel Discovery
+                  </span>
                 </div>
 
-                {inputMode === 'structured' ? (
-                  <StructuredInput
-                    formData={structuredForm}
-                    onChange={setStructuredForm}
-                    onSwitchMode={setInputMode}
-                    onSubmit={handleGenerateItinerary}
-                    isLoading={false}
-                  />
-                ) : (
-                  <PromptGeniusInput
-                    formData={promptForm}
-                    onChange={setPromptForm}
-                    onSwitchMode={setInputMode}
-                    onSubmit={handleGenerateItinerary}
-                    isLoading={false}
-                  />
-                )}
+                <h1 className="font-headline font-extrabold text-4xl sm:text-5xl lg:text-6xl text-[#00696b] max-w-3xl leading-[1.1] tracking-tight">
+                  Where does your{' '}
+                  <span className="text-[#a43c12] italic font-serif">
+                    vibe
+                  </span>{' '}
+                  want to go?
+                </h1>
 
-                {generateError && (
-                  <div className="mt-4 flex items-start gap-3 bg-red-50 border-2 border-red-300 text-red-700 rounded-none p-4 text-sm shadow-[3px_3px_0px_0px_#ba1a1a]">
-                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Không thể tạo lịch trình</p>
-                      <p className="mt-0.5 opacity-80">{generateError}</p>
-                    </div>
-                    <button
-                      onClick={() => setGenerateError(null)}
-                      className="ml-auto text-red-400 hover:text-red-600 font-bold text-lg leading-none"
-                    >
-                      ×
-                    </button>
+                <p className="text-base sm:text-lg text-[#3b4949] max-w-2xl leading-relaxed">
+                  Tell Planzo your dream mood, obscure interests, or aesthetic goals. We'll handle the logistics of your next escape.
+                </p>
+              </div>
+
+              {inputMode === 'structured' ? (
+                <StructuredInput
+                  formData={structuredForm}
+                  onChange={setStructuredForm}
+                  onSwitchMode={setInputMode}
+                  onSubmit={handleGenerateItinerary}
+                  isLoading={false}
+                />
+              ) : (
+                <PromptGeniusInput
+                  formData={promptForm}
+                  onChange={setPromptForm}
+                  onSwitchMode={setInputMode}
+                  onSubmit={handleGenerateItinerary}
+                  isLoading={false}
+                />
+              )}
+
+              {generateError && (
+                <div className="mt-4 flex items-start gap-3 bg-red-50 border-2 border-red-300 text-red-700 rounded-none p-4 text-sm shadow-[3px_3px_0px_0px_#ba1a1a]">
+                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Không thể tạo lịch trình</p>
+                    <p className="mt-0.5 opacity-80">{generateError}</p>
                   </div>
-                )}
-              </section>
-            )}
-          </>
-        )}
+                  <button
+                    onClick={() => setGenerateError(null)}
+                    className="ml-auto text-red-400 hover:text-red-600 font-bold text-lg leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
 
-        {/* ── My Trips tab — conditional render so images only mount/fetch when visible ── */}
-        {!isViewingItinerary && currentTab === 'my-trips' && (
+        {/* ── My Trips tab — CSS visibility toggled to preserve DOM & avoid remount jank ── */}
+        <div className={!isViewingItinerary && currentTab === 'my-trips' ? 'block' : 'hidden'}>
           <MyTripsView
             savedTrips={savedTrips}
             onSelectTrip={handleSelectTripFromMyTrips}
             onDeleteTrip={handleDeleteTrip}
             onCreateNewTrip={handleCreateNewTrip}
           />
-        )}
+        </div>
 
-        {/* ── Community tab — conditional render so images only mount/fetch when visible ── */}
-        {!isViewingItinerary && currentTab === 'community' && (
+        {/* ── Community tab — CSS visibility toggled to preserve DOM & avoid remount jank ── */}
+        <div className={!isViewingItinerary && currentTab === 'community' ? 'block' : 'hidden'}>
           <CommunityView
             trips={displayCommunityTrips}
             onSelectTrip={handleSelectTripFromCommunity}
+            isVisible={!isViewingItinerary && currentTab === 'community'}
           />
-        )}
+        </div>
 
         {/* ── Vibe Check tab ── */}
-        {!isViewingItinerary && currentTab === 'vibe-check' && (
+        <div className={!isViewingItinerary && currentTab === 'vibe-check' ? 'block' : 'hidden'}>
           <VibeCheckView onApplyVibe={handleApplyVibeFromCheck} />
-        )}
+        </div>
 
         {/* ── Profile tab ── */}
-        {!isViewingItinerary && currentTab === 'profile' && (
+        <div className={!isViewingItinerary && currentTab === 'profile' ? 'block' : 'hidden'}>
           <ProfileView
             currentUser={currentUser}
             savedTrips={savedTrips}
@@ -509,7 +508,7 @@ export default function App() {
             onSignOut={logoutUser}
             onSignIn={signInWithGoogle}
           />
-        )}
+        </div>
       </main>
 
       {/* ── Schedule Review Modal (only opened by user clicking "Review & Sync Schedule") ── */}
