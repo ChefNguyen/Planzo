@@ -418,21 +418,25 @@ export default function App() {
         )}
 
         {/* ── My Trips tab ── */}
-        {!isViewingItinerary && currentTab === 'my-trips' && (
-          <MyTripsView
-            savedTrips={savedTrips}
-            onSelectTrip={handleSelectTripFromMyTrips}
-            onDeleteTrip={handleDeleteTrip}
-            onCreateNewTrip={handleCreateNewTrip}
-          />
+        {!isViewingItinerary && (
+          <div className={currentTab === 'my-trips' ? 'block' : 'hidden'}>
+            <MyTripsView
+              savedTrips={savedTrips}
+              onSelectTrip={handleSelectTripFromMyTrips}
+              onDeleteTrip={handleDeleteTrip}
+              onCreateNewTrip={handleCreateNewTrip}
+            />
+          </div>
         )}
 
         {/* ── Community tab ── */}
-        {!isViewingItinerary && currentTab === 'community' && (
-          <CommunityView
-            trips={communityTrips}
-            onSelectTrip={handleSelectTripFromCommunity}
-          />
+        {!isViewingItinerary && (
+          <div className={currentTab === 'community' ? 'block' : 'hidden'}>
+            <CommunityView
+              trips={communityTrips}
+              onSelectTrip={handleSelectTripFromCommunity}
+            />
+          </div>
         )}
 
         {/* ── Vibe Check tab ── */}
