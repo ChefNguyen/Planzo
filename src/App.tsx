@@ -271,11 +271,10 @@ export default function App() {
     setCurrentTab(tab);
     setShowReviewModal(false);
     setItineraryReturnTab('explore');
-
-    if (tab === 'explore' || exploreScreen === 'itinerary') {
-      setExploreScreen('home');
-    }
-  }, [exploreScreen]);
+    // Use functional setter so we don't need exploreScreen in deps
+    // (which would invalidate this callback and break React.memo on child views)
+    setExploreScreen((prev) => (tab === 'explore' || prev === 'itinerary' ? 'home' : prev));
+  }, []);
 
   const handleSelectTripFromMyTrips = useCallback((trip: Itinerary) => {
     handleSelectTrip(trip, 'my-trips');
@@ -417,27 +416,22 @@ export default function App() {
           </>
         )}
 
-        {/* ── My Trips tab ── */}
-        {!isViewingItinerary && (
-          <div className={currentTab === 'my-trips' ? 'block' : 'hidden'}>
-            <MyTripsView
-              savedTrips={savedTrips}
-              onSelectTrip={handleSelectTripFromMyTrips}
-              onDeleteTrip={handleDeleteTrip}
-              onCreateNewTrip={handleCreateNewTrip}
-            />
-          </div>
-        )}
+        {/* ── My Trips & Community tabs — always mounted, CSS display toggled for instant switching ── */}
+        <div className={!isViewingItinerary && currentTab === 'my-trips' ? 'block' : 'hidden'}>
+          <MyTripsView
+            savedTrips={savedTrips}
+            onSelectTrip={handleSelectTripFromMyTrips}
+            onDeleteTrip={handleDeleteTrip}
+            onCreateNewTrip={handleCreateNewTrip}
+          />
+        </div>
 
-        {/* ── Community tab ── */}
-        {!isViewingItinerary && (
-          <div className={currentTab === 'community' ? 'block' : 'hidden'}>
-            <CommunityView
-              trips={communityTrips}
-              onSelectTrip={handleSelectTripFromCommunity}
-            />
-          </div>
-        )}
+        <div className={!isViewingItinerary && currentTab === 'community' ? 'block' : 'hidden'}>
+          <CommunityView
+            trips={communityTrips}
+            onSelectTrip={handleSelectTripFromCommunity}
+          />
+        </div>
 
         {/* ── Vibe Check tab ── */}
         {!isViewingItinerary && currentTab === 'vibe-check' && (
