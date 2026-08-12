@@ -78,7 +78,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
             return (
               <div
                 key={trip.id}
-                className="bg-white border-2 border-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#a43c12] hover:shadow-[7px_7px_0px_0px_#a43c12] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col md:flex-row items-stretch group"
+                className="bg-white border-2 border-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#a43c12] hover:shadow-[7px_7px_0px_0px_#a43c12] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-200 transform-gpu overflow-hidden flex flex-col md:flex-row items-stretch group"
               >
                 {/* Left Cover Image Banner */}
                 <div className="w-full md:w-64 h-48 md:h-48 relative overflow-hidden shrink-0 bg-[#f0eee6] rounded-none border-b-2 md:border-b-0 md:border-r-2 border-[#1b1c19]">

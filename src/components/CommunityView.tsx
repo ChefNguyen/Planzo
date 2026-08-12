@@ -9,7 +9,7 @@ interface CommunityViewProps {
 }
 
 export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTrip }) => {
-  const displayTrips = trips.slice(0, 12);
+  const displayTrips = trips.slice(0, 9);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 min-h-[70vh]">
@@ -17,14 +17,14 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
       <div className="mb-8">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#a43c12]/10 text-[#a43c12] text-xs font-headline font-black uppercase tracking-wider mb-2 border border-[#a43c12]/30 rounded-none">
           <Globe className="w-3.5 h-3.5" />
-          <span>Top {displayTrips.length} Trending Curations</span>
+          <span>Top 9 Trending Curations</span>
         </div>
         <h2 className="font-headline font-extrabold text-3xl text-[#00696b] flex items-center gap-2">
           <span>Community Vibe Vault</span>
           <Globe className="w-6 h-6 text-[#a43c12]" />
         </h2>
         <p className="text-sm text-[#3b4949] mt-1">
-          Explore top trending AI itineraries created by travelers around the globe.
+          Explore top 9 curated AI itineraries created by travelers around the globe.
         </p>
       </div>
 
@@ -42,7 +42,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
             return (
               <div
                 key={trip.id}
-                className="bg-white border-2 border-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#00696b] hover:shadow-[7px_7px_0px_0px_#00696b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between group"
+                className="bg-white border-2 border-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#00696b] hover:shadow-[7px_7px_0px_0px_#00696b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-200 transform-gpu overflow-hidden flex flex-col justify-between group"
               >
                 <div>
                   {/* Card Cover Image Header */}
