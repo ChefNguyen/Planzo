@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Clock,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { StructuredFormData } from '../types';
 
@@ -268,6 +269,12 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
 
   return (
     <div className="neobrutal-card p-6 sm:p-8 w-full max-w-4xl mx-auto relative">
+      {/* Rotated Neobrutalist Engine Sticker Badge */}
+      <div className="absolute -top-3.5 right-6 transform rotate-2 hidden sm:flex items-center gap-1.5 bg-[#ffd700] text-[#1b1c19] px-3.5 py-1 text-[10px] font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[2.5px_2.5px_0px_0px_#1b1c19] rounded-none z-10">
+        <Sparkles className="w-3.5 h-3.5 fill-[#1b1c19]" />
+        <span>Gemini 2.5 Flash Engine</span>
+      </div>
+
       {/* Mode Switcher Tabs */}
       <div className="flex items-center gap-2 mb-6">
         <div className="flex bg-[#f5f3ee] p-1.5 gap-2 border-2 border-[#1b1c19] rounded-none">

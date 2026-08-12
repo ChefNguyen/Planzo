@@ -366,29 +366,66 @@ export default function App() {
           <>
             {/* Screen: Home input form */}
             {exploreScreen === 'home' && (
-              <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-0 pt-4">
-                <div className="mb-8 text-left space-y-3">
+              <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-0 pt-2 pb-6">
+                {/* Floating Neobrutalist Rotated Feature Stickers Row */}
+                <div className="flex flex-wrap items-center gap-2.5 mb-6">
+                  <div className="transform -rotate-2 hover:rotate-0 transition-transform bg-[#a43c12] text-white px-3 py-1 text-[11px] font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19]">
+                    ⚡ 100% Vibe-Curated
+                  </div>
+                  <div className="transform rotate-2 hover:rotate-0 transition-transform bg-[#00ced1] text-[#1b1c19] px-3 py-1 text-[11px] font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19]">
+                    🎯 Instant Calendar Sync
+                  </div>
+                  <div className="transform -rotate-1 hover:rotate-0 transition-transform bg-[#ffd700] text-[#1b1c19] px-3 py-1 text-[11px] font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19]">
+                    🌟 10k+ Escapes Generated
+                  </div>
+                </div>
+
+                <div className="mb-8 text-left space-y-4">
                   <div className="inline-flex items-center gap-3 p-1.5 pr-4 bg-white border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] rounded-none transition-transform hover:-translate-y-0.5 hover:-translate-x-0.5">
                     <div className="px-3 py-1 rounded-none bg-[#a43c12] text-white flex items-center gap-1.5 font-headline font-black text-[10px] sm:text-[11px] tracking-wider uppercase border border-[#1b1c19]">
                       <Sparkles className="w-3.5 h-3.5 fill-current" />
                       <span>PLANZO AI</span>
                     </div>
                     <span className="text-xs font-headline font-black tracking-widest uppercase text-[#00696b]">
-                      Travel Discovery
+                      Travel Discovery Engine
                     </span>
                   </div>
 
-                  <h1 className="font-headline font-extrabold text-4xl sm:text-5xl lg:text-6xl text-[#00696b] max-w-3xl leading-[1.1] tracking-tight">
+                  <h1 className="font-headline font-black text-4xl sm:text-5xl lg:text-6xl text-[#00696b] max-w-3xl leading-[1.08] tracking-tight">
                     Where does your{' '}
-                    <span className="text-[#a43c12] italic font-serif">
+                    <span className="inline-block transform -rotate-2 bg-[#a43c12] text-white px-3.5 py-0.5 border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#1b1c19] uppercase font-headline font-black tracking-wide">
                       vibe
                     </span>{' '}
                     want to go?
                   </h1>
 
-                  <p className="text-base sm:text-lg text-[#3b4949] max-w-2xl leading-relaxed">
+                  <p className="text-base sm:text-lg text-[#3b4949] max-w-2xl leading-relaxed font-medium">
                     Tell Planzo your dream mood, obscure interests, or aesthetic goals. We'll handle the logistics of your next escape.
                   </p>
+
+                  {/* Interactive Quick Escape Rotated Sticker Launchers */}
+                  <div className="pt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-headline font-black uppercase tracking-wider text-[#6b7a7a]">
+                      Quick Escapes:
+                    </span>
+                    {[
+                      { label: '🌊 Da Nang Beaches & Coffee', dest: 'Da Nang, Vietnam', rot: '-rotate-2' },
+                      { label: '⛩️ Tokyo Anime & Ramen', dest: 'Tokyo, Japan', rot: 'rotate-1' },
+                      { label: '🍕 Rome Pasta & History', dest: 'Rome, Italy', rot: '-rotate-1' },
+                      { label: '🥐 Paris Art & Wine', dest: 'Paris, France', rot: 'rotate-2' },
+                    ].map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setStructuredForm((prev) => ({ ...prev, destination: item.dest }));
+                          setInputMode('structured');
+                        }}
+                        className={`transform ${item.rot} hover:rotate-0 hover:-translate-y-0.5 transition-all text-xs font-headline font-black uppercase tracking-wider px-3 py-1.5 bg-white text-[#1b1c19] border-2 border-[#1b1c19] shadow-[2.5px_2.5px_0px_0px_#1b1c19] active:translate-x-0 active:translate-y-0`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {inputMode === 'structured' ? (
