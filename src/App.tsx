@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, startTransition, useMemo } from 'react';
 import { Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { Header } from './components/Header';
 import { StructuredInput } from './components/StructuredInput';
@@ -136,14 +136,15 @@ export default function App() {
     let unsubUserTrips: (() => void) | undefined;
     if (currentUser) {
       unsubUserTrips = subscribeUserTrips(currentUser.uid, (trips) => {
-        setSavedTrips(trips);
+        // Wrap in startTransition so Firestore snapshot updates don't block tab interactions
+        startTransition(() => setSavedTrips(trips));
       });
     } else {
       setSavedTrips([]);
     }
 
     const unsubCommunity = subscribeCommunityTrips((trips) => {
-      setCommunityTrips(trips);
+      startTransition(() => setCommunityTrips(trips));
     });
 
     return () => {
@@ -151,6 +152,10 @@ export default function App() {
       unsubCommunity();
     };
   }, [currentUser]);
+
+  // Memoize the sliced community trips so CommunityView's React.memo never breaks
+  // due to a new array reference every time Firestore streams a snapshot
+  const displayCommunityTrips = useMemo(() => communityTrips.slice(0, 9), [communityTrips]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // CORE FLOW:
@@ -433,7 +438,7 @@ export default function App() {
         {/* ── Community tab — conditional render so images only mount/fetch when visible ── */}
         {!isViewingItinerary && currentTab === 'community' && (
           <CommunityView
-            trips={communityTrips}
+            trips={displayCommunityTrips}
             onSelectTrip={handleSelectTripFromCommunity}
           />
         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Itinerary } from '../types';
 import { MapPin, Calendar, Clock, ArrowRight, Trash2, Sparkles, Ticket, Compass, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomSearchImage } from './CustomSearchImage';
@@ -23,14 +23,12 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(savedTrips.length / ITEMS_PER_PAGE));
 
-  // Reset page if total trips reduced below current page bounds
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [savedTrips.length, totalPages, currentPage]);
-
-  const currentTrips = savedTrips.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  // Clamp page inline — no useEffect needed, avoids extra render cycle
+  const safePage = Math.min(currentPage, totalPages);
+  const currentTrips = useMemo(
+    () => savedTrips.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE),
+    [savedTrips, safePage],
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 min-h-[70vh]">

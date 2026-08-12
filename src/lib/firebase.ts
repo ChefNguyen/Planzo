@@ -18,6 +18,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -175,7 +176,7 @@ export const subscribeUserTrips = (userId: string, callback: (trips: Itinerary[]
 
 export const subscribeCommunityTrips = (callback: (trips: Itinerary[]) => void) => {
   try {
-    const q = query(collection(db, 'itineraries'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'itineraries'), orderBy('createdAt', 'desc'), limit(9));
 
     return onSnapshot(
       q,
