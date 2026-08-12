@@ -8,6 +8,8 @@ import {
   Sparkles,
   LogOut,
   ChevronDown,
+  ExternalLink,
+  Unlink,
 } from 'lucide-react';
 import { User } from '../lib/firebase';
 
@@ -137,29 +139,31 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Calendar Popover Menu */}
             {isCalendarMenuOpen && isCalendarConnected && (
-              <div className="absolute right-0 top-11 w-64 bg-white border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] p-3.5 space-y-3 z-50 animate-in fade-in zoom-in-95 duration-150 rounded-none">
-                <div className="flex items-center gap-2 border-b-2 border-[#1b1c19]/20 pb-2.5">
-                  <span className="w-2.5 h-2.5 bg-[#00ced1] border border-[#1b1c19] shrink-0" />
-                  <div>
-                    <p className="text-xs font-headline font-black text-[#1b1c19] uppercase tracking-wider">
+              <div className="absolute right-0 top-12 w-72 bg-[#ffffff] border-2 border-[#1b1c19] shadow-[6px_6px_0px_0px_#00696b] p-4 space-y-3 z-50 animate-in fade-in zoom-in-95 duration-150 rounded-none text-[#1b1c19]">
+                {/* Active Account Status Card */}
+                <div className="p-3 bg-[#00ced1]/15 border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2.5 h-2.5 bg-[#00696b] animate-pulse border border-[#1b1c19] shrink-0" />
+                    <p className="text-xs font-headline font-black text-[#00696b] uppercase tracking-wider">
                       Google Calendar Active
                     </p>
-                    <p className="text-[10px] text-[#6b7a7a] font-medium truncate">
-                      {sessionStorage.getItem('gcal_account_email') || currentUser?.email || 'Auto-Sync Active'}
-                    </p>
                   </div>
+                  <p className="text-[11px] text-[#3b4949] font-bold truncate">
+                    {sessionStorage.getItem('gcal_account_email') || currentUser?.email || 'Auto-Sync Active'}
+                  </p>
                 </div>
 
-                <div className="space-y-1.5">
+                {/* Actions */}
+                <div className="space-y-2">
                   <a
                     href="https://calendar.google.com"
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => setIsCalendarMenuOpen(false)}
-                    className="w-full text-left px-3 py-2 text-xs font-bold text-[#00696b] hover:bg-[#00ced1]/15 border border-transparent hover:border-[#1b1c19] transition-all flex items-center justify-between rounded-none"
+                    className="w-full px-3.5 py-2.5 bg-white hover:bg-[#00696b] text-[#00696b] hover:text-white border-2 border-[#1b1c19] shadow-[2.5px_2.5px_0px_0px_#1b1c19] font-headline font-black text-xs uppercase tracking-wider flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 rounded-none"
                   >
                     <span>Open Google Calendar</span>
-                    <span>↗</span>
+                    <ExternalLink className="w-4 h-4" />
                   </a>
 
                   <button
@@ -167,10 +171,10 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsCalendarMenuOpen(false);
                       onToggleCalendar();
                     }}
-                    className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 border border-transparent hover:border-[#1b1c19] transition-all flex items-center justify-between rounded-none"
+                    className="w-full px-3.5 py-2.5 bg-[#ba1a1a]/10 hover:bg-[#ba1a1a] text-[#ba1a1a] hover:text-white border-2 border-[#1b1c19] shadow-[2.5px_2.5px_0px_0px_#ba1a1a] font-headline font-black text-xs uppercase tracking-wider flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 rounded-none"
                   >
                     <span>Disconnect Calendar</span>
-                    <span>✕</span>
+                    <Unlink className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -190,9 +194,9 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 p-1 rounded-none bg-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all focus:outline-none"
+                className="flex items-center gap-2 p-1 bg-white border-2 border-[#1b1c19] shadow-[2.5px_2.5px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all focus:outline-none rounded-none"
               >
-                <div className="w-9 h-9 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] overflow-hidden flex items-center justify-center font-headline font-black text-sm relative">
+                <div className="w-9 h-9 bg-[#00696b] text-white border-2 border-[#1b1c19] overflow-hidden flex items-center justify-center font-headline font-black text-sm relative rounded-none">
                   {currentUser.photoURL && !imgError ? (
                     <img
                       src={currentUser.photoURL}
@@ -206,21 +210,22 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-[#1b1c19] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
-                    }`}
+                  className={`w-4 h-4 text-[#1b1c19] transition-transform duration-200 ${
+                    isDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 />
               </button>
             )}
 
             {/* Profile Dropdown Popup */}
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-3 w-72 bg-[#ffffff] rounded-none shadow-[4px_4px_0px_0px_#1b1c19] border-2 border-[#1b1c19] p-3 z-50 animate-in slide-in-from-top-2 duration-200 text-[#1b1c19]">
+              <div className="absolute right-0 mt-3 w-80 bg-[#ffffff] rounded-none shadow-[6px_6px_0px_0px_#1b1c19] border-2 border-[#1b1c19] p-4 z-50 animate-in slide-in-from-top-2 duration-200 text-[#1b1c19]">
                 {/* User Header Summary inside Dropdown */}
                 <div
                   onClick={() => handleNavClick('profile')}
-                  className="p-3 bg-[#f5f3ee] hover:bg-[#eae8e3] cursor-pointer rounded-none border-2 border-[#1b1c19] mb-2 flex items-center gap-3 transition-colors"
+                  className="p-3.5 bg-[#f5f3ee] hover:bg-[#00ced1]/15 cursor-pointer rounded-none border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] mb-3 flex items-center gap-3 transition-all hover:-translate-y-0.5"
                 >
-                  <div className="w-11 h-11 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] flex items-center justify-center font-bold overflow-hidden shrink-0">
+                  <div className="w-12 h-12 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] flex items-center justify-center font-bold overflow-hidden shrink-0 shadow-[2px_2px_0px_0px_#1b1c19]">
                     {currentUser?.photoURL && !imgError ? (
                       <img
                         src={currentUser.photoURL}
@@ -236,50 +241,53 @@ export const Header: React.FC<HeaderProps> = ({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-headline font-bold text-sm text-[#1b1c19] truncate">
+                    <h4 className="font-headline font-black text-sm text-[#1b1c19] truncate">
                       {currentUser?.displayName || (currentUser ? 'Planzo Traveler' : 'Guest Explorer')}
                     </h4>
-                    <p className="text-[11px] text-[#6b7a7a] truncate">
+                    <p className="text-[11px] text-[#6b7a7a] font-medium truncate">
                       {currentUser?.email || 'Click to view profile'}
                     </p>
-                    <span className="inline-block text-[10px] font-headline font-black uppercase text-[#00696b] bg-[#00ced1]/20 border border-[#00696b]/30 px-2 py-0.5 rounded-none mt-1">
+                    <span className="inline-block text-[10px] font-headline font-black uppercase text-[#1b1c19] bg-[#00ced1] border-2 border-[#1b1c19] px-2 py-0.5 rounded-none mt-1 shadow-[1.5px_1.5px_0px_0px_#1b1c19]">
                       {currentUser ? 'Gold Explorer' : 'Guest Mode'}
                     </span>
                   </div>
                 </div>
 
                 {/* Navigation Items */}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <button
                     onClick={() => handleNavClick('profile')}
-                    className={`w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold flex items-center gap-3 transition-colors border ${currentTab === 'profile'
-                      ? 'bg-[#00696b]/15 text-[#00696b] border-[#1b1c19]'
-                      : 'text-[#3b4949] border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
-                      }`}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-none font-headline font-black text-xs uppercase tracking-wider flex items-center gap-3 transition-all border-2 border-[#1b1c19] ${
+                      currentTab === 'profile'
+                        ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                        : 'bg-white text-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] hover:bg-[#f5f3ee] hover:-translate-x-0.5'
+                    }`}
                   >
-                    <UserIcon className="w-4 h-4 text-[#00696b]" />
+                    <UserIcon className={`w-4 h-4 ${currentTab === 'profile' ? 'text-white' : 'text-[#00696b]'}`} />
                     <span>My Profile & Preferences</span>
                   </button>
 
                   <button
                     onClick={() => handleNavClick('my-trips')}
-                    className={`w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold flex items-center gap-3 transition-colors border ${currentTab === 'my-trips'
-                      ? 'bg-[#00696b]/15 text-[#00696b] border-[#1b1c19]'
-                      : 'text-[#3b4949] border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
-                      }`}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-none font-headline font-black text-xs uppercase tracking-wider flex items-center gap-3 transition-all border-2 border-[#1b1c19] ${
+                      currentTab === 'my-trips'
+                        ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                        : 'bg-white text-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] hover:bg-[#f5f3ee] hover:-translate-x-0.5'
+                    }`}
                   >
-                    <Compass className="w-4 h-4 text-[#a43c12]" />
+                    <Compass className={`w-4 h-4 ${currentTab === 'my-trips' ? 'text-white' : 'text-[#a43c12]'}`} />
                     <span>My Saved Trips</span>
                   </button>
 
                   <button
                     onClick={() => handleNavClick('vibe-check')}
-                    className={`w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold flex items-center gap-3 transition-colors border ${currentTab === 'vibe-check'
-                      ? 'bg-[#00696b]/15 text-[#00696b] border-[#1b1c19]'
-                      : 'text-[#3b4949] border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee]'
-                      }`}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-none font-headline font-black text-xs uppercase tracking-wider flex items-center gap-3 transition-all border-2 border-[#1b1c19] ${
+                      currentTab === 'vibe-check'
+                        ? 'bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19]'
+                        : 'bg-white text-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] hover:bg-[#f5f3ee] hover:-translate-x-0.5'
+                    }`}
                   >
-                    <Sparkles className="w-4 h-4 text-[#00696b]" />
+                    <Sparkles className={`w-4 h-4 ${currentTab === 'vibe-check' ? 'text-white' : 'text-[#00696b]'}`} />
                     <span>Vibe Check Generator</span>
                   </button>
 
@@ -288,22 +296,23 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsDropdownOpen(false);
                       onToggleCalendar();
                     }}
-                    className="w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold text-[#3b4949] border border-transparent hover:border-[#1b1c19] hover:bg-[#f5f3ee] flex items-center justify-between transition-colors"
+                    className="w-full text-left px-3.5 py-2.5 bg-white text-[#1b1c19] border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center justify-between font-headline font-black text-xs uppercase tracking-wider hover:bg-[#f5f3ee] transition-all"
                   >
                     <div className="flex items-center gap-3">
                       <Calendar className="w-4 h-4 text-[#00696b]" />
                       <span>Google Calendar</span>
                     </div>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-none border border-[#1b1c19] ${isCalendarConnected ? 'bg-[#00ced1]/20 text-[#005354]' : 'bg-gray-200 text-gray-600'
-                        }`}
+                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-none border-2 border-[#1b1c19] shadow-[1.5px_1.5px_0px_0px_#1b1c19] ${
+                        isCalendarConnected ? 'bg-[#00ced1] text-[#1b1c19]' : 'bg-gray-200 text-gray-700'
+                      }`}
                     >
                       {isCalendarConnected ? 'ON' : 'OFF'}
                     </span>
                   </button>
                 </div>
 
-                <div className="my-2 border-t-2 border-[#1b1c19]/20" />
+                <div className="my-3 border-t-2 border-[#1b1c19]/20" />
 
                 {/* Sign In / Out */}
                 {currentUser ? (
@@ -312,10 +321,13 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsDropdownOpen(false);
                       onSignOut();
                     }}
-                    className="w-full text-left px-3.5 py-2.5 rounded-none text-xs font-bold text-[#a43c12] border-2 border-[#1b1c19] bg-white shadow-[2px_2px_0px_0px_#ba1a1a] flex items-center gap-3 transition-colors"
+                    className="w-full text-left px-3.5 py-2.5 rounded-none font-headline font-black text-xs uppercase tracking-wider text-[#ba1a1a] hover:text-white bg-[#ba1a1a]/10 hover:bg-[#ba1a1a] border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#ba1a1a] flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
-                    <LogOut className="w-4 h-4 text-[#a43c12]" />
-                    <span>Sign Out</span>
+                    <div className="flex items-center gap-3">
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </div>
+                    <span>→</span>
                   </button>
                 ) : (
                   <button
@@ -323,7 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsDropdownOpen(false);
                       onSignIn();
                     }}
-                    className="w-full py-2.5 px-4 font-headline font-black uppercase text-xs rounded-none flex items-center justify-center gap-2 border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] transition-all"
+                    className="w-full py-2.5 px-4 font-headline font-black uppercase text-xs rounded-none flex items-center justify-center gap-2 border-2 border-[#1b1c19] bg-[#00696b] text-white shadow-[3px_3px_0px_0px_#1b1c19] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
                     <UserIcon className="w-4 h-4" />
                     <span>Sign in with Google</span>
