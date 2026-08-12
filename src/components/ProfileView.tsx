@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, Itinerary } from '../types';
 import { User } from '../lib/firebase';
+import { CustomSearchImage } from './CustomSearchImage';
 import {
   User as UserIcon,
   Calendar,
@@ -15,6 +16,9 @@ import {
   CreditCard,
   Pencil,
   Plus,
+  MapPin,
+  Clock,
+  Ticket,
 } from 'lucide-react';
 
 interface ProfileViewProps {
@@ -29,13 +33,13 @@ interface ProfileViewProps {
 
 const DEFAULT_PREFERENCES = [
   { id: 'adventure', label: 'Adventure', active: true },
-  { id: 'foodie', label: 'Foodie', active: false },
-  { id: 'chill', label: 'Chill', active: false },
+  { id: 'foodie', label: 'Foodie', active: true },
+  { id: 'relax', label: 'Relax', active: false },
   { id: 'cultural', label: 'Cultural', active: true },
   { id: 'nightlife', label: 'Nightlife', active: false },
   { id: 'budget', label: 'Budget', active: false },
   { id: 'photography', label: 'Photography', active: true },
-  { id: 'hidden-gems', label: 'Hidden Gems', active: false },
+  { id: 'hidden-gems', label: 'Hidden Gems', active: true },
 ];
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
@@ -47,78 +51,84 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onSignOut,
   onSignIn,
 }) => {
-  // User Profile State
-  const [profile, setProfile] = useState<UserProfile>({
-    displayName: currentUser?.displayName || 'Sarah Jenkins',
-    email: currentUser?.email || 'sarah.j@example.com',
-    photoURL: currentUser?.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
-    bio: 'Chasing sunsets and algorithmic efficiency since 2021.',
-    location: 'San Francisco, CA',
-    memberSince: '2021',
-    preferredVibes: ['Adventure', 'Cultural', 'Photography'],
-    travelPace: 'Balanced',
-    preferredTransport: ['Walking', 'Public Transit'],
-    budgetLevel: 'Mid-range',
-    bucketList: ['Santorini, Greece', 'Kyoto, Japan', 'Lisbon, Portugal'],
-    calendarAutoSync: true,
+  // Real User Profile State
+  const [profile, setProfile] = useState<UserProfile>(() => {
+    const savedBio = localStorage.getItem('planzo_user_bio');
+    return {
+      displayName: currentUser?.displayName || 'Travel Explorer',
+      email: currentUser?.email || 'guest@planzo.ai',
+      photoURL: currentUser?.photoURL || '',
+      bio: savedBio || 'Exploring the world with Planzo AI-curated vibe itineraries.',
+      location: 'Global Traveler',
+      memberSince: '2026',
+      preferredVibes: ['Adventure', 'Cultural', 'Foodie'],
+      travelPace: 'Moderate',
+      preferredTransport: ['Walking', 'Public Transit'],
+      budgetLevel: 'Mid-range',
+      bucketList: [],
+      calendarAutoSync: true,
+    };
   });
 
-  // Notifications toggle state
-  const [notifications, setNotifications] = useState({
-    tripUpdates: true,
-    flightAlerts: true,
-    vibeCheckIns: false,
+  // Sync profile when currentUser changes
+  useEffect(() => {
+    setProfile((prev) => ({
+      ...prev,
+      displayName: currentUser?.displayName || 'Travel Explorer',
+      email: currentUser?.email || 'guest@planzo.ai',
+      photoURL: currentUser?.photoURL || prev.photoURL,
+    }));
+  }, [currentUser]);
+
+  // Notifications toggle state persisted in localStorage
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('planzo_notifications');
+    return saved
+      ? JSON.parse(saved)
+      : { tripUpdates: true, flightAlerts: true, vibeCheckIns: false };
   });
 
-  // Expensify integration state
-  const [isExpensifyConnected, setIsExpensifyConnected] = useState(false);
+  useEffect(() => {
+    localStorage.setItem('planzo_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
-  // Preference tags state
-  const [preferenceTags, setPreferenceTags] = useState(DEFAULT_PREFERENCES);
+  // Expensify integration state persisted in localStorage
+  const [isExpensifyConnected, setIsExpensifyConnected] = useState(() => {
+    return localStorage.getItem('planzo_expensify_connected') === 'true';
+  });
+
+  const toggleExpensify = () => {
+    const nextState = !isExpensifyConnected;
+    setIsExpensifyConnected(nextState);
+    localStorage.setItem('planzo_expensify_connected', String(nextState));
+  };
+
+  // Preference tags state persisted in localStorage
+  const [preferenceTags, setPreferenceTags] = useState(() => {
+    const saved = localStorage.getItem('planzo_user_preferences');
+    return saved ? JSON.parse(saved) : DEFAULT_PREFERENCES;
+  });
+
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   const togglePreference = (id: string) => {
-    setPreferenceTags((prev) =>
-      prev.map((tag) => (tag.id === id ? { ...tag, active: !tag.active } : tag))
-    );
+    setPreferenceTags((prev: typeof DEFAULT_PREFERENCES) => {
+      const updated = prev.map((tag) => (tag.id === id ? { ...tag, active: !tag.active } : tag));
+      localStorage.setItem('planzo_user_preferences', JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  const sampleHistoryTrips = [
-    {
-      id: 'santorini-1',
-      title: 'Santorini Escape',
-      date: 'June 15 - June 22, 2024',
-      status: 'UPCOMING',
-      badgeClass: 'bg-[#00696b] text-white',
-      imageUrl: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=600&auto=format&fit=crop&q=80',
-      collaborators: [
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      ],
-    },
-    {
-      id: 'kyoto-2',
-      title: 'Kyoto Zen',
-      date: 'Oct 10 - Oct 18, 2023',
-      status: 'COMPLETED',
-      badgeClass: 'bg-[#e2e8e8] text-[#3b4949]',
-      imageUrl: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&auto=format&fit=crop&q=80',
-      collaborators: [
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      ],
-    },
-    {
-      id: 'lisbon-3',
-      title: 'Lisbon Explorer',
-      date: 'TBD 2025',
-      status: 'DRAFT',
-      badgeClass: 'bg-[#a43c12] text-white',
-      pendingText: '3 items pending',
-      imageUrl: 'https://images.unsplash.com/photo-1513673054901-2b5f51551112?w=600&auto=format&fit=crop&q=80',
-      collaborators: [],
-    },
-  ];
+  const handleSaveProfileBio = (newBio: string) => {
+    setProfile((prev) => ({ ...prev, bio: newBio }));
+    localStorage.setItem('planzo_user_bio', newBio);
+    setIsEditingProfile(false);
+  };
+
+  // Real statistics derived from savedTrips
+  const totalStopsCount = savedTrips.reduce((acc, t) => acc + (t.totalStops || 0), 0);
+  const userInitial = (currentUser?.displayName || 'T').charAt(0).toUpperCase();
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-in fade-in duration-300">
@@ -126,7 +136,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-none p-6 sm:p-8 max-w-md w-full border-2 border-[#1b1c19] shadow-[6px_6px_0px_0px_#00696b] space-y-4 animate-in zoom-in-95 duration-200">
-            <h3 className="font-headline font-black text-xl text-[#1b1c19]">Edit User Profile</h3>
+            <h3 className="font-headline font-black text-xl text-[#1b1c19]">Edit Profile Bio</h3>
 
             <div className="space-y-3">
               <div>
@@ -135,32 +145,20 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </label>
                 <input
                   type="text"
+                  disabled
                   value={profile.displayName}
-                  onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold opacity-75 cursor-not-allowed"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-headline font-black text-[#00696b] uppercase tracking-wider mb-1">
-                  Bio
+                  Traveler Bio
                 </label>
                 <textarea
                   value={profile.bio}
                   onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  rows={2}
-                  className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-headline font-black text-[#00696b] uppercase tracking-wider mb-1">
-                  Avatar Image URL
-                </label>
-                <input
-                  type="text"
-                  value={profile.photoURL}
-                  onChange={(e) => setProfile({ ...profile, photoURL: e.target.value })}
+                  rows={3}
                   className="w-full px-4 py-2.5 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] text-sm font-bold focus:outline-none"
                 />
               </div>
@@ -174,10 +172,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 Cancel
               </button>
               <button
-                onClick={() => setIsEditingProfile(false)}
+                onClick={() => handleSaveProfileBio(profile.bio)}
                 className="neobrutal-btn-teal px-5 py-2 text-xs font-black uppercase rounded-none shadow-[2px_2px_0px_0px_#1b1c19]"
               >
-                Save Changes
+                Save Bio
               </button>
             </div>
           </div>
@@ -190,29 +188,33 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         <div className="lg:col-span-4 bg-white p-6 border-2 border-[#1b1c19] rounded-none shadow-[5px_5px_0px_0px_#00696b] flex flex-col items-center text-center relative space-y-4">
           {/* Avatar Container with Badge */}
           <div className="relative group cursor-pointer" onClick={() => setIsEditingProfile(true)}>
-            <div className="w-36 h-36 border-2 border-[#1b1c19] overflow-hidden shadow-[3px_3px_0px_0px_#1b1c19] rounded-none">
-              <img
-                src={profile.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'}
-                alt={profile.displayName}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-32 h-32 border-2 border-[#1b1c19] overflow-hidden shadow-[3px_3px_0px_0px_#1b1c19] rounded-none bg-[#00696b] flex items-center justify-center text-white">
+              {currentUser?.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt={profile.displayName}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="font-headline font-black text-4xl">{userInitial}</span>
+              )}
             </div>
 
             {/* Neobrutalist Orange Badge Pill */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#a43c12] text-white px-3.5 py-1 text-xs font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] whitespace-nowrap flex items-center gap-1 rounded-none">
-              <span>Level 42 Explorer</span>
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#a43c12] text-white px-3 py-0.5 text-[10px] font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] whitespace-nowrap rounded-none">
+              <span>{currentUser ? 'Gold Explorer' : 'Guest Explorer'}</span>
             </div>
           </div>
 
           {/* User Name & Bio */}
-          <div className="pt-3 space-y-1.5">
-            <h2 className="font-headline font-black text-2xl text-[#1b1c19] flex items-center justify-center gap-2">
+          <div className="pt-3 space-y-1.5 w-full">
+            <h2 className="font-headline font-black text-xl text-[#1b1c19] flex items-center justify-center gap-1.5 truncate">
               <span>{profile.displayName}</span>
               <button
                 onClick={() => setIsEditingProfile(true)}
                 className="text-gray-400 hover:text-[#00696b] transition-colors p-1"
-                title="Edit profile details"
+                title="Edit traveler bio"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -220,34 +222,52 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             <p className="text-xs text-[#6b7a7a] max-w-xs mx-auto leading-relaxed">
               {profile.bio}
             </p>
+            <p className="text-[11px] font-bold text-[#00696b] truncate">
+              {profile.email}
+            </p>
           </div>
 
-          {/* 3 Metric Cards Row */}
-          <div className="grid grid-cols-3 gap-2.5 w-full pt-2">
+          {/* Real Statistics Metric Cards Row */}
+          <div className="grid grid-cols-3 gap-2 w-full pt-2">
             <div className="bg-[#f5f3ee] p-3 text-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]">
-              <span className="block text-xl font-headline font-black text-[#1b1c19]">24</span>
+              <span className="block text-xl font-headline font-black text-[#1b1c19]">
+                {savedTrips.length}
+              </span>
               <span className="text-[10px] font-black text-[#6b7a7a] tracking-wider uppercase">
-                TRIPS
+                SAVED
               </span>
             </div>
 
             <div className="bg-[#f5f3ee] p-3 text-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]">
-              <span className="block text-xl font-headline font-black text-[#1b1c19]">12.4k</span>
+              <span className="block text-xl font-headline font-black text-[#1b1c19]">
+                {totalStopsCount}
+              </span>
               <span className="text-[10px] font-black text-[#6b7a7a] tracking-wider uppercase">
-                MILES
+                STOPS
               </span>
             </div>
 
             <div className="bg-[#00ced1]/20 p-3 text-center border-2 border-[#1b1c19] rounded-none shadow-[2px_2px_0px_0px_#1b1c19]">
-              <span className="block text-xl font-headline font-black text-[#005354]">88%</span>
+              <span className="block text-xl font-headline font-black text-[#005354]">
+                {savedTrips.length > 0 ? '100%' : '0%'}
+              </span>
               <span className="text-[10px] font-extrabold text-[#005354] tracking-wider uppercase">
                 VIBE
               </span>
             </div>
           </div>
+
+          {!currentUser && (
+            <button
+              onClick={onSignIn}
+              className="w-full neobrutal-btn-teal py-2.5 font-headline font-black text-xs uppercase tracking-wider rounded-none shadow-[2px_2px_0px_0px_#1b1c19]"
+            >
+              Sign In to Cloud Sync
+            </button>
+          )}
         </div>
 
-        {/* Right Column (Preferences, Connected, Notification Settings) */}
+        {/* Right Column (Preferences, Connected Apps, Notification Settings) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Top Row: Preferences Card + Connected Card */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -270,7 +290,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
               {/* Tags Pill Array */}
               <div className="flex flex-wrap gap-2">
-                {preferenceTags.map((tag) => (
+                {preferenceTags.map((tag: any) => (
                   <button
                     key={tag.id}
                     disabled={!isEditingPreferences}
@@ -292,7 +312,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-[#00696b]" />
                 <h3 className="font-headline font-extrabold text-lg text-[#1b1c19]">
-                  Connected
+                  Connected Apps
                 </h3>
               </div>
 
@@ -304,7 +324,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       <Calendar className="w-4 h-4 text-[#00696b]" />
                       <div>
                         <span className="text-xs font-bold text-[#1b1c19] block">Google Calendar</span>
-                        <span className="text-[10px] text-[#6b7a7a] font-medium">
+                        <span className="text-[10px] text-[#6b7a7a] font-medium truncate max-w-[130px] block">
                           {isCalendarConnected
                             ? (sessionStorage.getItem('gcal_account_email') || currentUser?.email || 'Auto-Sync Active')
                             : 'Not Connected'}
@@ -342,17 +362,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <div className="p-3 bg-[#f5f3ee] rounded-none border-2 border-[#1b1c19] flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <CreditCard className="w-4 h-4 text-[#a43c12]" />
-                    <span className="text-xs font-bold text-[#1b1c19]">Expensify</span>
+                    <span className="text-xs font-bold text-[#1b1c19]">Expensify Sync</span>
                   </div>
                   <button
-                    onClick={() => setIsExpensifyConnected(!isExpensifyConnected)}
-                    className={`px-3 py-1 rounded-none text-[10px] font-extrabold tracking-wider uppercase transition-all border-2 border-[#1b1c19] ${
+                    onClick={toggleExpensify}
+                    className={`px-3 py-1 rounded-none text-[10px] font-headline font-black tracking-wider uppercase transition-all border-2 border-[#1b1c19] ${
                       isExpensifyConnected
                         ? 'bg-[#00ced1]/25 text-[#005354]'
                         : 'text-[#00696b] font-bold hover:underline'
                     }`}
                   >
-                    {isExpensifyConnected ? 'ACTIVE' : 'Connect'}
+                    {isExpensifyConnected ? 'ACTIVE ✓' : 'Connect'}
                   </button>
                 </div>
               </div>
@@ -374,7 +394,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <span className="text-xs font-bold text-[#1b1c19]">Trip Updates</span>
                 <button
                   onClick={() =>
-                    setNotifications((n) => ({ ...n, tripUpdates: !n.tripUpdates }))
+                    setNotifications((n: any) => ({ ...n, tripUpdates: !n.tripUpdates }))
                   }
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.tripUpdates ? 'bg-[#00696b]' : 'bg-gray-300'
@@ -393,7 +413,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <span className="text-xs font-bold text-[#1b1c19]">Flight Alerts</span>
                 <button
                   onClick={() =>
-                    setNotifications((n) => ({ ...n, flightAlerts: !n.flightAlerts }))
+                    setNotifications((n: any) => ({ ...n, flightAlerts: !n.flightAlerts }))
                   }
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.flightAlerts ? 'bg-[#00696b]' : 'bg-gray-300'
@@ -412,7 +432,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <span className="text-xs font-bold text-[#1b1c19]">Vibe Check-ins</span>
                 <button
                   onClick={() =>
-                    setNotifications((n) => ({ ...n, vibeCheckIns: !n.vibeCheckIns }))
+                    setNotifications((n: any) => ({ ...n, vibeCheckIns: !n.vibeCheckIns }))
                   }
                   className={`w-10 h-6 flex items-center rounded-none p-0.5 border-2 border-[#1b1c19] transition-colors duration-200 ${
                     notifications.vibeCheckIns ? 'bg-[#00696b]' : 'bg-gray-300'
@@ -430,88 +450,130 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         </div>
       </div>
 
-      {/* BOTTOM SECTION: TRIP HISTORY */}
-      <div className="space-y-6 pt-4">
+      {/* BOTTOM SECTION: REAL TRIP HISTORY FETCHED FROM MY TRIPS */}
+      <div className="space-y-6 pt-4 border-t-2 border-[#1b1c19]/20">
         {/* Title & View All */}
         <div className="flex items-end justify-between">
           <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#a43c12]/10 text-[#a43c12] text-xs font-headline font-black uppercase tracking-wider mb-2 border border-[#a43c12]/30 rounded-none">
+              <Ticket className="w-3.5 h-3.5" />
+              <span>{savedTrips.length} Passport History</span>
+            </div>
             <h2 className="font-headline font-black text-2xl sm:text-3xl text-[#1b1c19]">
-              Trip History
+              Trip History & Passports
             </h2>
             <p className="text-xs text-[#6b7a7a] mt-0.5">
-              Manage your past and future adventures.
+              Manage your AI-generated travel itineraries synchronized with your account.
             </p>
           </div>
 
-          <button
-            onClick={() => onSelectTab('my-trips')}
-            className="text-xs font-bold text-[#00696b] hover:underline flex items-center gap-1"
-          >
-            <span>View All</span>
-          </button>
+          {savedTrips.length > 0 && (
+            <button
+              onClick={() => onSelectTab('my-trips')}
+              className="neobrutal-btn-teal px-4 py-2 text-xs font-headline font-black uppercase flex items-center gap-1.5 rounded-none shadow-[2px_2px_0px_0px_#1b1c19]"
+            >
+              <span>View All Saved Trips</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* 3 Trip Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {sampleHistoryTrips.map((trip) => (
-            <div
-              key={trip.id}
-              onClick={() => onSelectTab('my-trips')}
-              className="bg-white rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] hover:-translate-y-0.5 transition-all cursor-pointer group flex flex-col justify-between"
+        {/* 100% Real Trip Cards Grid (Fetched from savedTrips) */}
+        {savedTrips.length === 0 ? (
+          <div className="bg-white border-2 border-[#1b1c19] rounded-none p-8 text-center space-y-3 shadow-[4px_4px_0px_0px_#00696b]">
+            <Compass className="w-10 h-10 text-[#00696b] mx-auto opacity-80" />
+            <h3 className="font-headline font-bold text-lg text-[#1b1c19]">No Saved Trips Found</h3>
+            <p className="text-xs text-[#6b7a7a] max-w-sm mx-auto">
+              You haven't saved any travel itineraries yet. Generate your first vibe-based escape now!
+            </p>
+            <button
+              onClick={() => onSelectTab('explore')}
+              className="neobrutal-btn-terracotta px-5 py-2.5 rounded-none font-headline font-black text-xs uppercase shadow-[2px_2px_0px_0px_#1b1c19]"
             >
-              <div>
-                {/* Banner Image with Overlay Badge */}
-                <div className="h-44 w-full relative overflow-hidden bg-gray-100 border-b-2 border-[#1b1c19]">
-                  <img
-                    src={trip.imageUrl}
-                    alt={trip.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Status Badge */}
-                  <div className="absolute top-3 right-3">
-                    <span
-                      className={`px-3 py-1 rounded-none text-[10px] font-extrabold tracking-wider uppercase border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] ${trip.badgeClass}`}
-                    >
-                      {trip.status}
-                    </span>
+              + Create First Trip
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {savedTrips.slice(0, 3).map((trip) => (
+              <div
+                key={trip.id}
+                onClick={() => onSelectTab('my-trips')}
+                className="bg-white rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] hover:-translate-y-0.5 transition-all cursor-pointer group flex flex-col justify-between overflow-hidden"
+              >
+                <div>
+                  {/* Banner Image with Overlay Badge */}
+                  <div className="h-44 w-full relative overflow-hidden bg-[#f0eee6] border-b-2 border-[#1b1c19]">
+                    <CustomSearchImage
+                      query={trip.destination || trip.region || ''}
+                      alt={trip.destination || ''}
+                      className="w-full h-full"
+                    />
+                    <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <span className="px-3 py-1 rounded-none text-[10px] font-headline font-black tracking-wider uppercase border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] bg-[#00696b] text-white">
+                        SAVED PASSPORT
+                      </span>
+                    </div>
+
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className="px-2.5 py-0.5 text-[10px] font-headline font-black uppercase border-2 border-[#1b1c19] bg-white text-[#1b1c19]">
+                        {trip.region || trip.destination}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content Body */}
+                  <div className="p-5 space-y-2">
+                    <h3 className="font-headline font-black text-xl text-[#1b1c19] group-hover:text-[#00696b] transition-colors truncate">
+                      {trip.destination}
+                    </h3>
+
+                    <p className="text-xs text-[#6b7a7a] font-medium flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#a43c12]" />
+                      <span>{trip.dates}</span>
+                    </p>
+
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#3b4949] pt-1">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-[#00696b]" />
+                        <span>{trip.totalStops} Stops</span>
+                      </span>
+                      <span>•</span>
+                      <span>{trip.duration?.formatted || 'Multi-day'}</span>
+                    </div>
+
+                    {/* Vibes preview tags */}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {trip.vibes?.slice(0, 3).map((v, i) => (
+                        <span
+                          key={i}
+                          className="text-[10px] bg-[#f5f3ee] border border-[#1b1c19]/30 text-[#3b4949] font-bold px-2 py-0.5 rounded-none"
+                        >
+                          {v}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-5 space-y-1">
-                  <h3 className="font-headline font-black text-xl text-[#1b1c19] group-hover:text-[#00696b] transition-colors">
-                    {trip.title}
-                  </h3>
-                  <p className="text-xs text-[#6b7a7a] font-medium">{trip.date}</p>
+                {/* Card Footer Action */}
+                <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-[#1b1c19]/10 mt-2">
+                  <span className="text-[11px] font-bold text-[#6b7a7a]">
+                    ID: {trip.id.substring(0, 8)}...
+                  </span>
+
+                  <div className="text-xs font-headline font-black text-[#00696b] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <span>View Itinerary</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
                 </div>
               </div>
-
-              {/* Card Footer */}
-              <div className="px-5 pb-5 pt-2 flex items-center justify-between">
-                {/* Avatar stack or pending text */}
-                <div className="flex items-center -space-x-2">
-                  {trip.collaborators.map((avatar, i) => (
-                    <img
-                      key={i}
-                      src={avatar}
-                      alt="Collaborator"
-                      className="w-6 h-6 rounded-none border-2 border-[#1b1c19] object-cover"
-                    />
-                  ))}
-                  {trip.pendingText && (
-                    <span className="text-xs font-bold text-[#a43c12]">{trip.pendingText}</span>
-                  )}
-                </div>
-
-                {/* Action Link */}
-                <div className="text-xs font-bold text-[#00696b] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  <span>{trip.status === 'DRAFT' ? 'Edit Draft' : 'View Itinerary'}</span>
-                  {trip.status === 'DRAFT' ? <Edit2 className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
