@@ -679,7 +679,11 @@ async function fetchPexelsPhoto(query: string, fallbackQuery?: string): Promise<
     if (res.ok) {
       const data = await res.json();
       if (data.photos && data.photos.length > 0) {
-        return data.photos[0].src?.medium || data.photos[0].src?.large;
+        const photoUrl = data.photos[0].src?.medium || data.photos[0].src?.large;
+        if (photoUrl) {
+          console.log(`[Pexels Photo] Fetched photo for "${query}":`, photoUrl);
+          return photoUrl;
+        }
       }
     }
 
@@ -758,12 +762,12 @@ async function fetchPhotoWithCache(query: string, destinationFallback?: string):
     return inFlightPhotoRequests.get(normalizedQuery);
   }
 
-  // 3. Perform Fetch Pipeline
+  // 3. Perform Fetch Pipeline (Pexels Main API -> Wikimedia Fallback)
   const fetchPromise = (async () => {
     try {
-      let photoUrl = await fetchWikimediaPhoto(query);
+      let photoUrl = await fetchPexelsPhoto(query, destinationFallback);
       if (!photoUrl) {
-        photoUrl = await fetchPexelsPhoto(query, destinationFallback);
+        photoUrl = await fetchWikimediaPhoto(query);
       }
 
       // Cache result
