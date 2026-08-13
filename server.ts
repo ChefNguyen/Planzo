@@ -129,7 +129,7 @@ async function startServer() {
     }
   });
 
-  // Custom Search Image Proxy Endpoint with CDN & In-Memory Caching
+  // Image Proxy Endpoint with CDN & In-Memory Caching
   app.get('/api/search-image', async (req, res) => {
     try {
       const query = (req.query.q as string) || '';
@@ -701,8 +701,6 @@ async function fetchPexelsPhoto(query: string, fallbackQuery?: string): Promise<
   return undefined;
 }
 
-let googleSearchDisabledNoticeShown = false;
-
 async function fetchWikimediaPhoto(query: string): Promise<string | undefined> {
   try {
     const cleanedQuery = query.replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
@@ -722,44 +720,6 @@ async function fetchWikimediaPhoto(query: string): Promise<string | undefined> {
   } catch (err) {
     console.warn('[Wikimedia Photo] Fetch error:', err);
   }
-  return undefined;
-}
-
-async function fetchGoogleSearchPhoto(query: string): Promise<string | undefined> {
-  const apiKey =
-    process.env.GOOGLE_CUSTOM_SEARCH_API_KEY ||
-    process.env.GOOGLE_SEARCH_API_KEY ||
-    process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY;
-
-  const cx =
-    process.env.GOOGLE_SEARCH_ENGINE_ID ||
-    process.env.GOOGLE_SEARCH_CX ||
-    process.env.VITE_GOOGLE_SEARCH_ENGINE_ID ||
-    '04e3ac93a88804e30';
-
-  if (!apiKey || !cx) {
-    return undefined;
-  }
-
-  try {
-    const res = await fetch(
-      `https://customsearch.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&searchType=image&num=1&key=${apiKey}&cx=${cx}`
-    );
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.items && data.items.length > 0 && data.items[0].link) {
-        console.log(`[Google Search Photo] Fetched photo for "${query}":`, data.items[0].link);
-        return data.items[0].link;
-      }
-    } else if (res.status === 403 || res.status === 400) {
-      if (!googleSearchDisabledNoticeShown) {
-        console.warn(`[Photo Pipeline] Google Custom Search API returned HTTP ${res.status}. Seamlessly falling back to Wikimedia & HD Travel assets.`);
-        googleSearchDisabledNoticeShown = true;
-      }
-    }
-  } catch { }
   return undefined;
 }
 
@@ -801,11 +761,8 @@ async function fetchPhotoWithCache(query: string, destinationFallback?: string):
   // 3. Perform Fetch Pipeline
   const fetchPromise = (async () => {
     try {
-      let photoUrl = await fetchGoogleSearchPhoto(query);
+      let photoUrl = await fetchWikimediaPhoto(query);
       if (!photoUrl) {
-        photoUrl = await fetchWikimediaPhoto(query);
-      }
-      if (!photoUrl && destinationFallback) {
         photoUrl = await fetchPexelsPhoto(query, destinationFallback);
       }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Itinerary } from '../types';
 import { Sparkles, MapPin, ArrowRight, Globe, Flame } from 'lucide-react';
 import { CustomSearchImage } from './CustomSearchImage';
+import { toCommunityEnglishLabel } from '../lib/communityLabels';
 
 interface CommunityViewProps {
   trips: Itinerary[];
@@ -40,6 +41,10 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayTrips.map((trip) => {
+            const displayDestination = toCommunityEnglishLabel(trip.destination);
+            const displayRegion = toCommunityEnglishLabel(trip.region || trip.destination);
+            const displayVibes = trip.vibes.map(toCommunityEnglishLabel);
+
             return (
               <div
                 key={trip.id}
@@ -49,8 +54,8 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                   {/* Card Cover Image Header */}
                   <div className="h-44 w-full relative overflow-hidden bg-[#f0eee6] rounded-none border-b-2 border-[#1b1c19]">
                     <CustomSearchImage
-                      query={trip.destination || trip.region}
-                      alt={trip.destination}
+                      query={displayDestination || displayRegion}
+                      alt={displayDestination}
                       className="w-full h-full"
                       isVisible={isVisible}
                     />
@@ -60,7 +65,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                     <div className="absolute top-3 left-3 z-20">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1b1c19] text-white text-xs font-headline font-black uppercase tracking-wider border-2 border-white/30 rounded-none shadow-[2px_2px_0px_0px_#00696b]">
                         <span className="w-2 h-2 bg-[#00ced1] shrink-0" />
-                        <span>{trip.region || trip.destination}</span>
+                        <span>{displayRegion}</span>
                       </span>
                     </div>
 
@@ -79,7 +84,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                   <div className="p-5">
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <h3 className="font-headline font-black text-2xl text-[#1b1c19] group-hover:text-[#00696b] transition-colors truncate">
-                        {trip.destination}
+                        {displayDestination}
                       </h3>
                       {trip.duration?.formatted && (
                         <span className="text-xs font-headline font-black uppercase tracking-wider text-[#a43c12] bg-[#a43c12]/15 border border-[#a43c12]/30 px-2.5 py-0.5 rounded-none shrink-0">
@@ -94,7 +99,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                     </p>
 
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {trip.vibes.map((v, i) => (
+                      {displayVibes.map((v, i) => (
                         <span
                           key={i}
                           className="text-[11px] bg-[#f5f3ee] border-2 border-[#1b1c19] text-[#3b4949] font-black uppercase px-2.5 py-0.5 rounded-none"

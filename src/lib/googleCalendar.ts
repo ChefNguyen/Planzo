@@ -2,19 +2,11 @@ import { Itinerary, Activity } from '../types';
 import { auth } from './firebase';
 
 /**
- * Returns a Google Calendar URL targeting the connected account's calendar.
- * Uses the email stored in sessionStorage (gcal_account_email) if available,
- * then falls back to the Firebase auth user's email, then bare calendar root.
+ * Returns a stable Google Calendar home URL.
+ * The /u/<email>/ path format returns 404, and /u/0 style indexes depend on
+ * the browser session, so the user may need to switch accounts manually.
  */
-export function getGoogleCalendarUrl(email?: string | null): string {
-  const gcalEmail =
-    email ||
-    sessionStorage.getItem('gcal_account_email') ||
-    auth.currentUser?.email;
-
-  if (gcalEmail) {
-    return `https://calendar.google.com/calendar/u/${encodeURIComponent(gcalEmail)}/r`;
-  }
+export function getGoogleCalendarUrl(_email?: string | null): string {
   return 'https://calendar.google.com/calendar/r';
 }
 
@@ -270,10 +262,9 @@ export function syncAllToGoogleCalendar(itinerary: Itinerary): void {
   downloadItineraryIcs(itinerary);
   const gcalEmail =
     sessionStorage.getItem('gcal_account_email') || auth.currentUser?.email;
-  const base = gcalEmail
-    ? `https://calendar.google.com/calendar/u/${encodeURIComponent(gcalEmail)}/r/settings/export`
-    : 'https://calendar.google.com/calendar/r/settings/export';
-  window.open(base, '_blank');
+  const base = 'https://calendar.google.com/calendar/r/settings/export';
+  const url = gcalEmail ? `${base}?authuser=${encodeURIComponent(gcalEmail)}` : base;
+  window.open(url, '_blank');
 }
 
 /**
@@ -282,10 +273,11 @@ export function syncAllToGoogleCalendar(itinerary: Itinerary): void {
 export async function syncItineraryToGoogleCalendarApi(
   itinerary: Itinerary,
   accessToken: string
-): Promise<{ success: boolean; count: number; error?: string }> {
+): Promise<{ success: boolean; count: number; skippedCount: number; error?: string }> {
   const baseDate = parseItineraryStartDate(itinerary);
 
   let syncedCount = 0;
+  let skippedCount = 0;
   const timeZone =
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh';
 
@@ -337,7 +329,7 @@ export async function syncItineraryToGoogleCalendarApi(
 
         const eventPayload = {
           summary: `[Planzo] ${act.title} (${itinerary.destination})`,
-          description: `Day ${day.dayNumber} Activity in ${itinerary.destination}\nVibe: ${act.vibe}\nTime: ${act.time}\n\nGenerated with Planzo AI Travel Planner`,
+          description: `Day ${day.dayNumber} Activity in ${itinerary.destination}\nVibe: ${act.vibe}\nTime: ${act.time}\nPlanzo Itinerary ID: ${itinerary.id}\n\nGenerated with Planzo AI Travel Planner`,
           location: act.location || itinerary.destination,
           start: {
             dateTime: dtStartObj.toISOString(),
@@ -347,7 +339,57 @@ export async function syncItineraryToGoogleCalendarApi(
             dateTime: dtEndObj.toISOString(),
             timeZone,
           },
+          extendedProperties: {
+            private: {
+              planzoItineraryId: itinerary.id,
+              planzoActivityId: act.id,
+              planzoDayNumber: String(day.dayNumber),
+              planzoStartTime: dtStartObj.toISOString(),
+            },
+          },
         };
+
+        const searchStart = new Date(dtStartObj.getTime() - 60 * 1000);
+        const searchEnd = new Date(dtEndObj.getTime() + 60 * 1000);
+        const queryParams = new URLSearchParams({
+          timeMin: searchStart.toISOString(),
+          timeMax: searchEnd.toISOString(),
+          singleEvents: 'true',
+          q: eventPayload.summary,
+        });
+
+        const existingRes = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events?${queryParams.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (existingRes.ok) {
+          const existing = await existingRes.json();
+          const hasDuplicate = Array.isArray(existing.items) && existing.items.some((item: any) => {
+            const sameStart = item.start?.dateTime && new Date(item.start.dateTime).getTime() === dtStartObj.getTime();
+            const sameEnd = item.end?.dateTime && new Date(item.end.dateTime).getTime() === dtEndObj.getTime();
+            const sameItinerary =
+              item.extendedProperties?.private?.planzoItineraryId === itinerary.id ||
+              item.description?.includes(`Planzo Itinerary ID: ${itinerary.id}`);
+            const sameLegacyEvent =
+              item.location === eventPayload.location &&
+              item.description?.includes(`Day ${day.dayNumber} Activity in ${itinerary.destination}`) &&
+              item.description?.includes(`Time: ${act.time}`);
+
+            return item.status !== 'cancelled' && item.summary === eventPayload.summary && sameStart && sameEnd && (sameItinerary || sameLegacyEvent);
+          });
+
+          if (hasDuplicate) {
+            skippedCount++;
+            continue;
+          }
+        } else {
+          console.warn('GCal API duplicate check warning:', await existingRes.text());
+        }
 
         const res = await fetch(
           'https://www.googleapis.com/calendar/v3/calendars/primary/events',
@@ -369,9 +411,9 @@ export async function syncItineraryToGoogleCalendarApi(
       }
     }
 
-    return { success: true, count: syncedCount };
+    return { success: true, count: syncedCount, skippedCount };
   } catch (err: any) {
     console.error('Google Calendar API batch sync error:', err);
-    return { success: false, count: syncedCount, error: err.message };
+    return { success: false, count: syncedCount, skippedCount, error: err.message };
   }
 }

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Itinerary } from '../types';
 import { MapPin, Calendar, Clock, ArrowRight, Trash2, Sparkles, Ticket, Compass, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomSearchImage } from './CustomSearchImage';
+import { toCommunityEnglishLabel } from '../lib/communityLabels';
 
 interface MyTripsViewProps {
   savedTrips: Itinerary[];
@@ -75,6 +76,10 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
       ) : (
         <div className="flex flex-col gap-5">
           {currentTrips.map((trip) => {
+            const displayDestination = toCommunityEnglishLabel(trip.destination);
+            const displayRegion = toCommunityEnglishLabel(trip.region || trip.destination);
+            const displayVibes = trip.vibes.map(toCommunityEnglishLabel);
+
             return (
               <div
                 key={trip.id}
@@ -83,8 +88,8 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
                 {/* Left Cover Image Banner */}
                 <div className="w-full md:w-64 h-48 md:h-48 relative overflow-hidden shrink-0 bg-[#f0eee6] rounded-none border-b-2 md:border-b-0 md:border-r-2 border-[#1b1c19]">
                   <CustomSearchImage
-                    query={trip.destination || trip.region}
-                    alt={trip.destination}
+                    query={displayDestination || displayRegion}
+                    alt={displayDestination}
                     className="w-full h-full"
                     isVisible={isVisible}
                   />
@@ -94,7 +99,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
                   <div className="absolute top-3 left-3 z-20">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1b1c19] text-white text-xs font-headline font-black uppercase tracking-wider border-2 border-white/30 rounded-none shadow-[2px_2px_0px_0px_#a43c12]">
                       <span className="w-2 h-2 bg-[#a43c12] shrink-0" />
-                      <span>{trip.region || trip.destination}</span>
+                      <span>{displayRegion}</span>
                     </span>
                   </div>
                 </div>
@@ -104,7 +109,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <h3 className="font-headline font-extrabold text-2xl text-[#1b1c19] group-hover:text-[#00696b] transition-colors truncate">
-                        {trip.destination}
+                        {displayDestination}
                       </h3>
                       {trip.duration?.formatted && (
                         <span className="text-xs font-headline font-black uppercase text-[#a43c12] bg-[#a43c12]/10 px-2.5 py-0.5 rounded-none border border-[#a43c12]/30 shrink-0">
@@ -128,7 +133,7 @@ export const MyTripsView = React.memo<MyTripsViewProps>(({
                     </div>
 
                     <div className="flex flex-wrap gap-1.5">
-                      {trip.vibes.map((v, i) => (
+                      {displayVibes.map((v, i) => (
                         <span
                           key={i}
                           className="text-[11px] bg-[#f5f3ee] border border-[#1b1c19]/30 text-[#3b4949] font-bold px-2.5 py-0.5 rounded-none"

@@ -248,9 +248,6 @@ export const Header: React.FC<HeaderProps> = ({
                     <p className="text-[11px] text-[#6b7a7a] font-medium truncate">
                       {currentUser?.email || 'Click to view profile'}
                     </p>
-                    <span className="inline-block text-[10px] font-headline font-black uppercase text-[#1b1c19] bg-[#00ced1] border-2 border-[#1b1c19] px-2 py-0.5 rounded-none mt-1 shadow-[1.5px_1.5px_0px_0px_#1b1c19]">
-                      {currentUser ? 'Gold Explorer' : 'Guest Mode'}
-                    </span>
                   </div>
                 </div>
 

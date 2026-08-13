@@ -211,11 +211,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <span className="font-headline font-black text-4xl">{userInitial}</span>
               )}
             </div>
-
-            {/* Neobrutalist Orange Badge Pill */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#a43c12] text-white px-3 py-0.5 text-[10px] font-headline font-black uppercase tracking-wider border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] whitespace-nowrap rounded-none">
-              <span>{currentUser ? 'Gold Explorer' : 'Guest Explorer'}</span>
-            </div>
           </div>
 
           {/* User Name & Bio */}

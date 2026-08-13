@@ -421,11 +421,11 @@ export default function App() {
                 </div>
 
                 <h1 className="font-headline font-extrabold text-4xl sm:text-5xl lg:text-6xl text-[#00696b] max-w-3xl leading-[1.1] tracking-tight">
-                  Where does your{' '}
+                  Find the place your{' '}
                   <span className="text-[#a43c12] italic font-serif">
                     vibe
                   </span>{' '}
-                  want to go?
+                  belongs.
                 </h1>
 
                 <p className="text-base sm:text-lg text-[#3b4949] max-w-2xl leading-relaxed">

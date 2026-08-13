@@ -64,9 +64,13 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
     if (token) {
       const apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
-      if (apiResult.success && apiResult.count > 0) {
+      if (apiResult.success && (apiResult.count > 0 || apiResult.skippedCount > 0)) {
         setSyncState('synced');
-        setSyncNotice(`Đã tự động tạo trực tiếp ${apiResult.count} lịch trình vào Google Calendar (${gcalEmail || 'Tài khoản đã chọn'})!`);
+        setSyncNotice(
+          apiResult.count > 0
+            ? `Đã tự động tạo trực tiếp ${apiResult.count} lịch trình vào Google Calendar (${gcalEmail || 'Tài khoản đã chọn'})!${apiResult.skippedCount > 0 ? ` Bỏ qua ${apiResult.skippedCount} lịch trình đã tồn tại.` : ''}`
+            : `Lịch trình này đã tồn tại trong Google Calendar (${gcalEmail || 'Tài khoản đã chọn'}), không tạo thêm bản lặp.`
+        );
         window.open(getGoogleCalendarUrl(gcalEmail), '_blank');
         onConfirmSync();
         return;
@@ -220,7 +224,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                           >
                             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                               <label className="text-[11px] font-headline font-black uppercase text-[#00696b] tracking-wider flex items-center gap-1.5 shrink-0">
-                                <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Thời Gian:
+                                <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Time:
                               </label>
                               <div className="flex items-center gap-1.5">
                                 <input
