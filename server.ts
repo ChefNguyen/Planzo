@@ -133,6 +133,162 @@ function normalizeRegionToEnglish(region: string): string {
     .replace(/Central Vietnam,\s*Vietnam/gi, 'Central Vietnam');
 }
 
+// Comprehensive NLP helper to extract number of requested days from Vietnamese/English prompts or dates
+function extractRequestedDays(datesStr?: string, promptStr?: string): number {
+  const text = `${datesStr || ''} ${promptStr || ''}`.toLowerCase();
+  const normalized = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+
+  // 1. Shorthand NĐ / ND format: "5n4d", "5n4đ", "5n/4d", "5d4n", "5d/4n", "5n 4d", "5d 4n", "5n", "5d"
+  const shorthandMatch = normalized.match(/(\d{1,2})\s*[nd]\s*(?:\/|\s*)?\s*(\d{1,2})?\s*[nd]/i);
+  if (shorthandMatch && shorthandMatch[1]) {
+    const num = parseInt(shorthandMatch[1], 10);
+    if (num >= 1 && num <= 14) return num;
+  }
+
+  // 2. Explicit Vietnamese "N ngày [M đêm]" or "N ngay [M dem]" or "N hôm" / "N days"
+  const vnDayMatch = normalized.match(/(\d{1,2})\s*(?:ngay|hom|buoi|days?|day|d)\b/i);
+  if (vnDayMatch && vnDayMatch[1]) {
+    const num = parseInt(vnDayMatch[1], 10);
+    if (num >= 1 && num <= 14) return num;
+  }
+
+  // 3. Reversed format: "4 đêm 5 ngày" / "4 dem 5 ngay"
+  const revMatch = normalized.match(/(?:dem|nights?)\s*(?:va\s*)?(\d{1,2})\s*ngay/i);
+  if (revMatch && revMatch[1]) {
+    const num = parseInt(revMatch[1], 10);
+    if (num >= 1 && num <= 14) return num;
+  }
+
+  // 4. Night-only match: "4 đêm" / "4 nights" -> days = nights + 1 = 5
+  const nightMatch = normalized.match(/(\d{1,2})\s*(?:dem|nights?|night)\b/i);
+  if (nightMatch && nightMatch[1]) {
+    const nights = parseInt(nightMatch[1], 10);
+    const days = nights + 1;
+    if (days >= 1 && days <= 14) return days;
+  }
+
+  // 5. Weeks match: "1 tuần" / "2 tuần" / "1 week"
+  const weekMatch = normalized.match(/(\d{1,2})\s*(?:tuan|weeks?|week)\b/i);
+  if (weekMatch && weekMatch[1]) {
+    const weeks = parseInt(weekMatch[1], 10);
+    const days = Math.min(14, weeks * 7);
+    if (days >= 1) return days;
+  }
+
+  // 6. Word-based numbers in Vietnamese & English
+  const WORD_NUMBER_MAP: [RegExp, number][] = [
+    [/\b(?:muoi bon|fourteen)\s*(?:ngay|days?)/i, 14],
+    [/\b(?:muoi ba|thirteen)\s*(?:ngay|days?)/i, 13],
+    [/\b(?:muoi hai|twelve)\s*(?:ngay|days?)/i, 12],
+    [/\b(?:muoi mot|eleven)\s*(?:ngay|days?)/i, 11],
+    [/\b(?:muoi|ten)\s*(?:ngay|days?)/i, 10],
+    [/\b(?:chin|nine)\s*(?:ngay|days?)/i, 9],
+    [/\b(?:tam|eight)\s*(?:ngay|days?)/i, 8],
+    [/\b(?:bay|seven)\s*(?:ngay|days?)/i, 7],
+    [/\b(?:mot tuan|one week|1 week)\b/i, 7],
+    [/\b(?:sau|six)\s*(?:ngay|days?)/i, 6],
+    [/\b(?:nam|five)\s*(?:ngay|days?)/i, 5],
+    [/\b(?:bon|four)\s*(?:ngay|days?)/i, 4],
+    [/\b(?:ba|three)\s*(?:ngay|days?)/i, 3],
+    [/\b(?:hai|two)\s*(?:ngay|days?)/i, 2],
+    [/\b(?:cuoi tuan|weekend)\b/i, 2],
+    [/\b(?:mot|one)\s*(?:ngay|days?|hom)/i, 1],
+    [/\b(?:trong ngay|trong hom|in a day|day trip)\b/i, 1],
+  ];
+
+  for (const [regex, days] of WORD_NUMBER_MAP) {
+    if (regex.test(normalized)) return days;
+  }
+
+  // 7. ISO Date Range YYYY-MM-DD to YYYY-MM-DD
+  const isoMatches = [...(datesStr || '').matchAll(/(\d{4})-(\d{1,2})-(\d{1,2})/g)];
+  if (isoMatches.length >= 2) {
+    const d1 = new Date(parseInt(isoMatches[0][1]), parseInt(isoMatches[0][2]) - 1, parseInt(isoMatches[0][3]));
+    const d2 = new Date(parseInt(isoMatches[1][1]), parseInt(isoMatches[1][2]) - 1, parseInt(isoMatches[1][3]));
+    const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
+    if (diffDays >= 1 && diffDays <= 14) return diffDays;
+  }
+
+  // 8. Vietnamese Date range: "từ 10 đến 15" / "10/8 - 15/8"
+  const vnRangeMatch = text.match(/(\d{1,2})(?:\/\d{1,2})?\s*(?:đến|den|-|to)\s*(\d{1,2})(?:\/\d{1,2})?/i);
+  if (vnRangeMatch && vnRangeMatch[1] && vnRangeMatch[2]) {
+    const startDay = parseInt(vnRangeMatch[1], 10);
+    const endDay = parseInt(vnRangeMatch[2], 10);
+    if (endDay > startDay && (endDay - startDay + 1) <= 14) {
+      return endDay - startDay + 1;
+    }
+  }
+
+  // 9. English Month Date Range e.g. "Aug 15 - Aug 20"
+  const monthMap: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+  };
+  const monthMatches = [...(datesStr || '').matchAll(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/gi)];
+  if (monthMatches.length >= 2) {
+    const m1 = monthMap[monthMatches[0][1].toLowerCase().substring(0, 3)];
+    const day1 = parseInt(monthMatches[0][2], 10);
+    const m2 = monthMap[monthMatches[1][1].toLowerCase().substring(0, 3)];
+    const day2 = parseInt(monthMatches[1][2], 10);
+
+    const yr = new Date().getFullYear();
+    const d1 = new Date(yr, m1, day1);
+    const d2 = new Date(yr, m2, day2);
+    const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
+    if (diffDays >= 1 && diffDays <= 14) return diffDays;
+  }
+
+  return 3;
+}
+
+function extractDestinationFromPrompt(prompt: string): string {
+  if (!prompt) return 'Da Nang, Vietnam';
+  const clean = prompt
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+
+  const KNOWN_DESTS: [RegExp, string][] = [
+    [/da nang/i, 'Da Nang, Vietnam'],
+    [/quy nhon|binh dinh/i, 'Quy Nhon, Vietnam'],
+    [/ha noi|hanoi/i, 'Hanoi, Vietnam'],
+    [/sai gon|ho chi minh|tphcm/i, 'Ho Chi Minh City, Vietnam'],
+    [/phu quoc/i, 'Phu Quoc, Vietnam'],
+    [/nha trang/i, 'Nha Trang, Vietnam'],
+    [/da lat|dalat/i, 'Dalat, Vietnam'],
+    [/sa pa|sapa|lao cai/i, 'Sapa, Vietnam'],
+    [/hoi an/i, 'Hoi An, Vietnam'],
+    [/hue/i, 'Hue, Vietnam'],
+    [/ha long|quang ninh/i, 'Ha Long Bay, Vietnam'],
+    [/ninh binh/i, 'Ninh Binh, Vietnam'],
+    [/vung tau/i, 'Vung Tau, Vietnam'],
+    [/phan thiet|mui ne/i, 'Phan Thiet, Vietnam'],
+    [/tokyo/i, 'Tokyo, Japan'],
+    [/kyoto/i, 'Kyoto, Japan'],
+    [/osaka/i, 'Osaka, Japan'],
+    [/seoul/i, 'Seoul, South Korea'],
+    [/bangkok/i, 'Bangkok, Thailand'],
+    [/singapore/i, 'Singapore'],
+    [/paris/i, 'Paris, France'],
+    [/rome/i, 'Rome, Italy'],
+    [/london/i, 'London, UK'],
+    [/bali|ubud/i, 'Bali, Indonesia'],
+    [/zurich|switzerland|thuy si/i, 'Zurich, Switzerland'],
+  ];
+
+  for (const [regex, name] of KNOWN_DESTS) {
+    if (regex.test(clean)) return name;
+  }
+
+  return 'Da Nang, Vietnam';
+}
+
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -255,47 +411,7 @@ async function startServer() {
     }
   });
 
-  // Helper function to extract number of requested days from dates or prompt string
-  function extractRequestedDays(datesStr?: string, promptStr?: string): number {
-    const text = `${datesStr || ''} ${promptStr || ''}`;
 
-    // 1. Explicit "N days" or "N-day" match
-    const dayMatch = text.match(/(\d+)\s*[-_]?days?/i);
-    if (dayMatch && dayMatch[1]) {
-      const parsed = parseInt(dayMatch[1], 10);
-      if (parsed >= 1 && parsed <= 14) return parsed;
-    }
-
-    // 2. ISO Date Range YYYY-MM-DD to YYYY-MM-DD
-    const isoMatches = [...(datesStr || '').matchAll(/(\d{4})-(\d{1,2})-(\d{1,2})/g)];
-    if (isoMatches.length >= 2) {
-      const d1 = new Date(parseInt(isoMatches[0][1]), parseInt(isoMatches[0][2]) - 1, parseInt(isoMatches[0][3]));
-      const d2 = new Date(parseInt(isoMatches[1][1]), parseInt(isoMatches[1][2]) - 1, parseInt(isoMatches[1][3]));
-      const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
-      if (diffDays >= 1 && diffDays <= 14) return diffDays;
-    }
-
-    // 3. English Month Date Range e.g. "Aug 15 - Aug 20"
-    const monthMap: Record<string, number> = {
-      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
-    };
-    const monthMatches = [...(datesStr || '').matchAll(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})/gi)];
-    if (monthMatches.length >= 2) {
-      const m1 = monthMap[monthMatches[0][1].toLowerCase().substring(0, 3)];
-      const day1 = parseInt(monthMatches[0][2], 10);
-      const m2 = monthMap[monthMatches[1][1].toLowerCase().substring(0, 3)];
-      const day2 = parseInt(monthMatches[1][2], 10);
-
-      const yr = new Date().getFullYear();
-      const d1 = new Date(yr, m1, day1);
-      const d2 = new Date(yr, m2, day2);
-      const diffDays = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1);
-      if (diffDays >= 1 && diffDays <= 14) return diffDays;
-    }
-
-    return 3;
-  }
 
   // AI Itinerary Generation Endpoint (rate-limited: 10 req/min per IP)
   app.post('/api/generate-itinerary', aiRateLimiter, async (req, res) => {
@@ -333,12 +449,20 @@ CRITICAL MANDATORY LANGUAGE RULES:
 
       let userPrompt = '';
       if (mode === 'prompt' && prompt) {
-        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary based on this prompt: "${prompt}". ${budgetText}. ${paceText}. Write 100% of all activity titles, vibe notes, descriptions, and day titles in VIETNAMESE. Ensure the response contains exactly ${requestedDays} days in the "days" array.`;
+        userPrompt = `USER PROMPT: "${prompt}".
+CRITICAL CONSTRAINT: You MUST generate EXACTLY ${requestedDays} DAYS in the "days" array (Day 1 through Day ${requestedDays}), containing full morning, afternoon, and evening activities for every single day.
+${budgetText}. ${paceText}.
+Output the top-level "region" and "vibes" in ENGLISH.
+Write 100% of all activity titles, vibe notes, descriptions, and day titles in natural VIETNAMESE (Tiếng Việt).`;
       } else {
         const dest = destination || 'Tokyo, Japan';
         const d = dates || 'Upcoming Weekend';
         const v = Array.isArray(vibes) && vibes.length > 0 ? vibes.join(', ') : 'Adventure & Foodie';
-        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary for destination "${dest}" for dates "${d}" with the following vibes: "${v}". ${budgetText}. ${paceText}. Write 100% of all activity titles, vibe notes, descriptions, and day titles in VIETNAMESE. The "days" array in the output MUST contain exactly ${requestedDays} items, numbered 1 to ${requestedDays}.`;
+        userPrompt = `Generate a customized ${requestedDays}-day travel itinerary for destination "${dest}" for dates "${d}" with the following vibes: "${v}".
+CRITICAL CONSTRAINT: The "days" array in the output MUST contain EXACTLY ${requestedDays} items, numbered 1 to ${requestedDays}.
+${budgetText}. ${paceText}.
+Output the top-level "region" and "vibes" in ENGLISH.
+Write 100% of all activity titles, vibe notes, descriptions, and day titles in natural VIETNAMESE (Tiếng Việt).`;
       }
 
       const modelsToTry = [
@@ -625,30 +749,6 @@ async function createFallbackItinerary(destination?: string, dates?: string, vib
     createdAt: new Date().toISOString(),
     days: daysWithPlaces,
   };
-}
-
-function extractDestinationFromPrompt(prompt: string): string {
-  const p = (prompt || '').trim();
-  if (!p) return 'Da Nang, Vietnam';
-
-  const lower = p.toLowerCase();
-  if (lower.includes('quy nhon') || lower.includes('quynhon')) return 'Quy Nhon, Vietnam';
-  if (lower.includes('nha trang') || lower.includes('nhatrang')) return 'Nha Trang, Vietnam';
-  if (lower.includes('phu quoc') || lower.includes('phuquoc')) return 'Phu Quoc, Vietnam';
-  if (lower.includes('da lat') || lower.includes('dalat')) return 'Da Lat, Vietnam';
-  if (lower.includes('sapa') || lower.includes('sa pa')) return 'Sapa, Vietnam';
-  if (lower.includes('hue')) return 'Hue, Vietnam';
-  if (lower.includes('hoi an') || lower.includes('hoian')) return 'Hoi An, Vietnam';
-  if (lower.includes('ha long') || lower.includes('halong')) return 'Ha Long, Vietnam';
-  if (lower.includes('hanoi') || lower.includes('ha noi')) return 'Hanoi, Vietnam';
-  if (lower.includes('saigon') || lower.includes('ho chi minh')) return 'Ho Chi Minh, Vietnam';
-  if (lower.includes('da nang') || lower.includes('danang')) return 'Da Nang, Vietnam';
-  if (lower.includes('tokyo')) return 'Tokyo, Japan';
-  if (lower.includes('kyoto')) return 'Kyoto, Japan';
-  if (lower.includes('paris')) return 'Paris, France';
-  if (lower.includes('bali')) return 'Ubud, Bali';
-
-  return p.charAt(0).toUpperCase() + p.slice(1);
 }
 
 const DESTINATION_COORDS: Record<string, { lat: number; lng: number }> = {
