@@ -42,9 +42,19 @@ if (-not $bucketExists) {
 Write-Host "==> [4/6] Building and pushing Docker image via Cloud Build..." -ForegroundColor Green
 gcloud builds submit --gcs-source-staging-dir="gs://$PROJECT_ID-build-source/staging" --tag $IMAGE --project $PROJECT_ID
 
-Write-Host "==> [4.5/6] Granting Secret Manager Accessor role to Cloud Run Service Account..." -ForegroundColor Green
+Write-Host "==> [4.5/6] Granting Secret Manager Accessor role & checking secrets..." -ForegroundColor Green
 $PROJECT_NUMBER = gcloud projects describe $PROJECT_ID --format="value(projectNumber)"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor" 2>$null
+
+# Auto-create PEXELS_API_KEY in Secret Manager if missing
+$pexelsSecretExists = $null
+try {
+  $pexelsSecretExists = gcloud secrets describe PEXELS_API_KEY 2>$null
+} catch {}
+if (-not $pexelsSecretExists) {
+  Write-Host "  (Creating PEXELS_API_KEY secret in Secret Manager...)" -ForegroundColor Gray
+  "thQ6usGDSNEoWQQsMNprXF8vSjLt2qyVN8jlXFAFOvZpt4jidsRosUhL" | gcloud secrets create PEXELS_API_KEY --data-file=- 2>$null
+}
 
 Write-Host "==> [5/6] Deploying to Cloud Run..." -ForegroundColor Green
 gcloud run deploy $SERVICE_NAME `

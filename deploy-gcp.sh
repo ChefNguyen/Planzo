@@ -43,6 +43,12 @@ gcloud builds submit \
   --tag "$IMAGE" \
   --project "$PROJECT_ID"
 
+# Auto-create PEXELS_API_KEY in Secret Manager if missing
+if ! gcloud secrets describe PEXELS_API_KEY >/dev/null 2>&1; then
+  echo "  (Creating PEXELS_API_KEY secret in Secret Manager...)"
+  echo -n "thQ6usGDSNEoWQQsMNprXF8vSjLt2qyVN8jlXFAFOvZpt4jidsRosUhL" | gcloud secrets create PEXELS_API_KEY --data-file=-
+fi
+
 echo "==> [5/6] Deploying to Cloud Run..."
 gcloud run deploy "$SERVICE_NAME" \
   --image "$IMAGE" \
