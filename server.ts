@@ -23,6 +23,74 @@ const getFilePath = () => {
 const __appFilename = getFilePath();
 const __appDirname = path.dirname(__appFilename);
 
+const VIBE_MAP_TO_EN: Record<string, string> = {
+  'bien dao': 'Beach & Island',
+  'bien': 'Beach & Coast',
+  'dao': 'Island Escape',
+  'am thuc': 'Foodie',
+  'van hoa': 'Culture',
+  'nghi duong': 'Relax & Resort',
+  'thu gian': 'Relax',
+  chill: 'Chill',
+  'phieu luu': 'Adventure',
+  adventure: 'Adventure',
+  'the thao mao hiem': 'Extreme Sports',
+  'kham pha nang dong': 'Active Exploration',
+  'kham pha': 'Exploration',
+  'van hoa tra matcha': 'Matcha Tea Culture',
+  'di san unesco': 'UNESCO Heritage',
+  'co kinh tinh lang': 'Quiet Old Town',
+  'thien nhien tho mong': 'Scenic Nature',
+  'thien nhien': 'Nature',
+  'tam linh': 'Spiritual',
+  'lich su': 'History',
+  'di tich': 'Heritage',
+  'bao tang': 'Museums',
+  'nghe thuat': 'Art & Design',
+  'ca phe': 'Cafe Culture',
+  'mua sam': 'Shopping',
+  shopping: 'Shopping',
+  'dem': 'Nightlife',
+  nightlife: 'Nightlife',
+  'bar': 'Bars & Pubs',
+  'sang trong': 'Luxury',
+  luxury: 'Luxury',
+  'tiet kiem': 'Budget',
+  budget: 'Budget',
+  'gia dinh': 'Family',
+  'cap doi': 'Romantic',
+  'lang man': 'Romantic',
+  romantic: 'Romantic',
+  'leo nui': 'Hiking & Trekking',
+  'cam trai': 'Camping',
+  camping: 'Camping',
+  'du lich sinh thai': 'Eco-Tourism',
+  'sinh thai': 'Eco-Tourism',
+  'song ao': 'Photography',
+  'check in': 'Sightseeing',
+  'suc khoe': 'Wellness',
+  wellness: 'Wellness',
+  'duong pho': 'Street Life',
+  'an uong': 'Dining',
+  'du thuyen': 'Cruise',
+  'chua chien': 'Temples & Pagodas',
+  'chua': 'Temples',
+  'song nuoc': 'Riverways',
+};
+
+function normalizeVibeTagToEnglish(tag: string): string {
+  if (!tag) return 'Adventure';
+  const clean = tag
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .trim()
+    .toLowerCase();
+  if (VIBE_MAP_TO_EN[clean]) return VIBE_MAP_TO_EN[clean];
+  return tag.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -212,9 +280,12 @@ async function startServer() {
       const budgetText = budgetLevel ? `Budget Tier: ${budgetLevel}` : 'Budget Tier: Mid-range ($$)';
       const paceText = travelPace ? `Travel Pace: ${travelPace}` : 'Travel Pace: Moderate (4-5 stops/day)';
 
+
+
       let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots (specifying explicit Start Time - End Time with default duration of ~2 hours per stop, e.g. "09:00 AM - 11:00 AM", "01:30 PM - 03:30 PM"), iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.
 
-CRITICAL MANDATORY LANGUAGE RULE:
+CRITICAL MANDATORY LANGUAGE RULES:
+- The top-level 'vibes' array tags MUST ALWAYS be concise ENGLISH strings (e.g., 'Beach & Island', 'Culture', 'Foodie', 'Relax', 'Nightlife', 'Adventure', 'Nature', 'Chill', 'Luxury', 'Shopping', 'Hidden Gems', 'Spiritual', 'Heritage').
 - ALWAYS write 100% of ALL titles, activity descriptions, vibe notes ("vibe" field), location details ("location" field), and day headings in VIETNAMESE (Tiếng Việt), regardless of whether the destination is in Vietnam or abroad (e.g., Tokyo, Paris, Rome, Kyoto, Da Nang, etc.) and regardless of whether input mode is Structured or AI Prompt Genius.
 - Do NOT output English for titles, activity descriptions, or vibe notes. Keep all generated textual prose strictly in natural, engaging Vietnamese (Tiếng Việt).`;
 
@@ -348,11 +419,14 @@ CRITICAL MANDATORY LANGUAGE RULE:
           })
         );
 
+        const rawVibes = Array.isArray(parsed.vibes) && parsed.vibes.length > 0 ? parsed.vibes : (Array.isArray(vibes) && vibes.length > 0 ? vibes : ['Adventure', 'Foodie']);
+        const englishVibes = rawVibes.map((v: string) => normalizeVibeTagToEnglish(v));
+
         const itinerary = {
           id: `trip-${Date.now()}`,
           destination: destName,
           dates: parsed.dates || dates || 'Flexible Dates',
-          vibes: parsed.vibes || vibes || ['Bespoke'],
+          vibes: englishVibes,
           totalStops: parsed.totalStops || daysWithPlaces.reduce((acc: number, day: any) => acc + day.activities.length, 0),
           activeHours: parsed.activeHours || 6.5,
           region: parsed.region || 'Central District',
@@ -415,7 +489,7 @@ CRITICAL MANDATORY LANGUAGE RULE:
 async function createFallbackItinerary(destination?: string, dates?: string, vibes?: string[], prompt?: string) {
   const dest = destination || (prompt ? extractDestinationFromPrompt(prompt) : 'Quy Nhon, Vietnam');
   const d = dates || 'Upcoming Weekend';
-  const vList = Array.isArray(vibes) && vibes.length > 0 ? vibes : ['Adventure', 'Foodie', 'Scenic'];
+  const vList = (Array.isArray(vibes) && vibes.length > 0 ? vibes : ['Adventure', 'Foodie', 'Scenic']).map((v) => normalizeVibeTagToEnglish(v));
 
   const dayTemplates = [
     { title: 'Morning Exploration & Local Culinary Vibe', act1: 'Thưởng thức Cà phê & Đặc sản địa phương', act2: 'Khám phá Thắng cảnh đẹp nhất' },

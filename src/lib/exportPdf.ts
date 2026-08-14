@@ -1,5 +1,6 @@
 import { Itinerary } from '../types';
 import { parseItineraryStartDate } from './googleCalendar';
+import { toCommunityEnglishLabel } from './communityLabels';
 
 /**
  * Utility to trigger browser printable PDF export for an Itinerary with specific formatted calendar dates.
@@ -36,6 +37,7 @@ export function exportItineraryToPdf(itinerary: Itinerary): void {
   const formattedDateRange = `${formattedStartDateStr} – ${formattedEndDateStr}`;
 
   const vibesHtml = itinerary.vibes
+    .map((v) => toCommunityEnglishLabel(v))
     .map(
       (v) =>
         `<span style="background: #e6f7f7; color: #00696b; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; margin-right: 6px;">${v}</span>`

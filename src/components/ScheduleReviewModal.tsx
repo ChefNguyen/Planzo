@@ -509,7 +509,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                           key={i}
                           className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-2.5 py-0.5 rounded-none font-bold border border-[#1b1c19] break-words"
                         >
-                          {v}
+                          {toCommunityEnglishLabel(v)}
                         </span>
                       ))}
                     </div>

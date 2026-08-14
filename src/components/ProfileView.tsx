@@ -535,7 +535,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                           key={i}
                           className="text-[10px] bg-[#f5f3ee] border border-[#1b1c19]/30 text-[#3b4949] font-bold px-2 py-0.5 rounded-none"
                         >
-                          {v}
+                          {toCommunityEnglishLabel(v)}
                         </span>
                       ))}
                     </div>
