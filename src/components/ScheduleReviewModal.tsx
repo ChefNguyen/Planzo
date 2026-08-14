@@ -3,7 +3,7 @@ import { Itinerary, Activity } from '../types';
 import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
 import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi, getGoogleCalendarUrl } from '../lib/googleCalendar';
 import { exportItineraryToPdf } from '../lib/exportPdf';
-import { signInWithGoogle, connectGoogleCalendarAccount, auth } from '../lib/firebase';
+import { auth, signInWithGoogle, connectGoogleCalendarAccount } from '../lib/firebase';
 import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
 
 interface ScheduleReviewModalProps {
@@ -34,7 +34,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     downloadItineraryIcs(itinerary);
     setTimeout(() => {
       setSyncState('synced');
-      setSyncNotice(`Đã tải file .ics chứa toàn bộ ${itinerary.totalStops} điểm dừng trong chuyến đi!`);
+      setSyncNotice(`Downloaded .ics file containing all ${itinerary.totalStops} itinerary stops!`);
       onConfirmSync();
     }, 800);
   };
@@ -47,7 +47,6 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     let gcalEmail = sessionStorage.getItem('gcal_account_email');
 
     if (!token) {
-      // 1. If not signed in to web app, must login first!
       if (!auth.currentUser) {
         const user = await signInWithGoogle();
         if (!user) {
@@ -56,7 +55,6 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
         }
       }
 
-      // 2. Logged in -> OAuth connect for Calendar (account select prompt)
       const res = await connectGoogleCalendarAccount();
       token = res?.accessToken || sessionStorage.getItem('gcal_access_token');
       gcalEmail = res?.email || sessionStorage.getItem('gcal_account_email') || '';
@@ -68,8 +66,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
         setSyncState('synced');
         setSyncNotice(
           apiResult.count > 0
-            ? `Đã tự động tạo trực tiếp ${apiResult.count} lịch trình vào Google Calendar (${gcalEmail || 'Tài khoản đã chọn'})!${apiResult.skippedCount > 0 ? ` Bỏ qua ${apiResult.skippedCount} lịch trình đã tồn tại.` : ''}`
-            : `Lịch trình này đã tồn tại trong Google Calendar (${gcalEmail || 'Tài khoản đã chọn'}), không tạo thêm bản lặp.`
+            ? `Successfully synced ${apiResult.count} events directly to Google Calendar (${gcalEmail || 'Selected Account'})!${apiResult.skippedCount > 0 ? ` Skipped ${apiResult.skippedCount} existing events.` : ''}`
+            : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
         );
         window.open(getGoogleCalendarUrl(gcalEmail), '_blank');
         onConfirmSync();
@@ -81,29 +79,9 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     syncAllToGoogleCalendar(itinerary);
     setTimeout(() => {
       setSyncState('synced');
-      setSyncNotice(`Đã tạo file .ics và mở Google Calendar Import. Hãy kéo thả file vào lịch của bạn!`);
+      setSyncNotice(`Created .ics file & opened Google Calendar Import page. Drag and drop file to sync!`);
       onConfirmSync();
     }, 800);
-  };
-
-  const handleDeleteActivity = (dayIndex: number, activityId: string) => {
-    const updatedDays = itinerary.days.map((day, idx) => {
-      if (idx === dayIndex) {
-        return {
-          ...day,
-          activities: day.activities.filter((act) => act.id !== activityId),
-        };
-      }
-      return day;
-    });
-
-    const totalStops = updatedDays.reduce((acc, d) => acc + d.activities.length, 0);
-
-    onUpdateItinerary({
-      ...itinerary,
-      days: updatedDays,
-      totalStops,
-    });
   };
 
   const handleStartEdit = (act: Activity) => {
@@ -139,6 +117,26 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
       days: updatedDays,
     });
     setEditingActivity(null);
+  };
+
+  const handleDeleteActivity = (dayIndex: number, activityId: string) => {
+    const updatedDays = itinerary.days.map((day, idx) => {
+      if (idx === dayIndex) {
+        return {
+          ...day,
+          activities: day.activities.filter((act) => act.id !== activityId),
+        };
+      }
+      return day;
+    });
+
+    const totalStops = updatedDays.reduce((acc, d) => acc + d.activities.length, 0);
+
+    onUpdateItinerary({
+      ...itinerary,
+      days: updatedDays,
+      totalStops,
+    });
   };
 
   return (
