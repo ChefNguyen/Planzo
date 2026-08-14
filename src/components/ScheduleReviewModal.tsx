@@ -63,6 +63,17 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     setGcalState('syncing');
     setSyncNotice(null);
 
+    // Pre-open the new tab in the synchronous click event to avoid browser popup blocking
+    let newTab: Window | null = null;
+    try {
+      newTab = window.open('about:blank', '_blank');
+      if (newTab) {
+        newTab.document.title = 'Connecting to Google Calendar...';
+      }
+    } catch {
+      newTab = null;
+    }
+
     let token = sessionStorage.getItem('gcal_access_token');
     let gcalEmail = sessionStorage.getItem('gcal_account_email');
 
@@ -70,6 +81,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
       if (!auth.currentUser) {
         const user = await signInWithGoogle();
         if (!user) {
+          if (newTab && !newTab.closed) newTab.close();
           setGcalState('idle');
           return;
         }
@@ -77,6 +89,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
       const res = await connectGoogleCalendarAccount();
       if (res?.error) {
+        if (newTab && !newTab.closed) newTab.close();
         setGcalState('idle');
         setSyncNoticeType('warning');
         setSyncNotice(
@@ -91,6 +104,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     }
 
     if (!token) {
+      if (newTab && !newTab.closed) newTab.close();
       setGcalState('idle');
       setSyncNoticeType('warning');
       setSyncNotice('Unable to acquire Google Calendar access token. Please try again.');
@@ -107,12 +121,15 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
           : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
       );
       const targetUrl = getGoogleCalendarUrl(gcalEmail);
-      const opened = window.open(targetUrl, '_blank');
-      if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-        window.location.href = targetUrl;
+      if (newTab && !newTab.closed) {
+        newTab.location.href = targetUrl;
+        newTab.focus();
+      } else {
+        window.open(targetUrl, '_blank');
       }
       onConfirmSync();
     } else {
+      if (newTab && !newTab.closed) newTab.close();
       setGcalState('idle');
       setSyncNoticeType('warning');
       setSyncNotice(apiResult.error || 'Failed to sync events to Google Calendar. Please check calendar permissions.');
