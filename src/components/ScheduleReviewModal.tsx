@@ -20,8 +20,10 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
   onConfirmSync,
   onUpdateItinerary,
 }) => {
-  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'synced'>('idle');
+  const [icsState, setIcsState] = useState<'idle' | 'exporting' | 'exported'>('idle');
+  const [gcalState, setGcalState] = useState<'idle' | 'syncing' | 'synced'>('idle');
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [syncNoticeType, setSyncNoticeType] = useState<'success' | 'warning'>('success');
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editTime, setEditTime] = useState('');
@@ -45,19 +47,20 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
   });
   const formattedDateRange = `${formattedStartDateStr} – ${formattedEndDateStr}`;
 
-  const handleSyncClick = () => {
-    setSyncState('syncing');
+  const handleIcsExport = () => {
+    setIcsState('exporting');
     setSyncNotice(null);
     downloadItineraryIcs(itinerary);
     setTimeout(() => {
-      setSyncState('synced');
+      setIcsState('exported');
+      setSyncNoticeType('success');
       setSyncNotice(`Downloaded .ics file containing all ${itinerary.totalStops} itinerary stops!`);
-      onConfirmSync();
-    }, 800);
+      setTimeout(() => setIcsState('idle'), 3000);
+    }, 600);
   };
 
   const handleGoogleCalendarSync = async () => {
-    setSyncState('syncing');
+    setGcalState('syncing');
     setSyncNotice(null);
 
     let token = sessionStorage.getItem('gcal_access_token');
@@ -67,49 +70,53 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
       if (!auth.currentUser) {
         const user = await signInWithGoogle();
         if (!user) {
-          setSyncState('idle');
+          setGcalState('idle');
           return;
         }
       }
 
       const res = await connectGoogleCalendarAccount();
+      if (res?.error) {
+        setGcalState('idle');
+        setSyncNoticeType('warning');
+        setSyncNotice(
+          res.error === 'cancelled'
+            ? 'Google Calendar sign-in was cancelled.'
+            : 'Google Calendar permission was not granted. Please allow access to sync your schedule directly.'
+        );
+        return;
+      }
       token = res?.accessToken || sessionStorage.getItem('gcal_access_token');
       gcalEmail = res?.email || sessionStorage.getItem('gcal_account_email') || '';
     }
 
-    if (token) {
-      const apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
-      if (apiResult.success && (apiResult.count > 0 || apiResult.skippedCount > 0)) {
-        setSyncState('synced');
-        setSyncNotice(
-          apiResult.count > 0
-            ? `Successfully synced ${apiResult.count} events directly to Google Calendar (${gcalEmail || 'Selected Account'})!${apiResult.skippedCount > 0 ? ` Skipped ${apiResult.skippedCount} existing events.` : ''}`
-            : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
-        );
-        const targetUrl = getGoogleCalendarUrl(gcalEmail);
-        const opened = window.open(targetUrl, '_blank');
-        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-          window.location.href = targetUrl;
-        }
-        onConfirmSync();
-        return;
-      }
+    if (!token) {
+      setGcalState('idle');
+      setSyncNoticeType('warning');
+      setSyncNotice('Unable to acquire Google Calendar access token. Please try again.');
+      return;
     }
 
-    // Fallback if API token is missing or denied
-    const importUrl = gcalEmail
-      ? `https://calendar.google.com/calendar/r/settings/export?authuser=${encodeURIComponent(gcalEmail)}`
-      : 'https://calendar.google.com/calendar/r/settings/export';
-    downloadItineraryIcs(itinerary);
-    setTimeout(() => {
-      setSyncState('synced');
-      setSyncNotice(`Created .ics file & opened Google Calendar Import page. Drag and drop file to sync!`);
-      const opened = window.open(importUrl, '_blank');
+    const apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
+    if (apiResult.success && (apiResult.count > 0 || apiResult.skippedCount > 0)) {
+      setGcalState('synced');
+      setSyncNoticeType('success');
+      setSyncNotice(
+        apiResult.count > 0
+          ? `Successfully synced ${apiResult.count} events directly to Google Calendar (${gcalEmail || 'Selected Account'})!${apiResult.skippedCount > 0 ? ` Skipped ${apiResult.skippedCount} existing events.` : ''}`
+          : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
+      );
+      const targetUrl = getGoogleCalendarUrl(gcalEmail);
+      const opened = window.open(targetUrl, '_blank');
       if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-        window.location.href = importUrl;
+        window.location.href = targetUrl;
       }
       onConfirmSync();
-    }, 800);
+    } else {
+      setGcalState('idle');
+      setSyncNoticeType('warning');
+      setSyncNotice(apiResult.error || 'Failed to sync events to Google Calendar. Please check calendar permissions.');
+    }
   };
 
   const handleStartEdit = (act: Activity) => {
@@ -214,8 +221,16 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
           {/* Sync Notice Alert Banner */}
           {syncNotice && (
-            <div className="mt-3 px-4 py-2.5 bg-[#00696b]/10 border-2 border-[#1b1c19] rounded-none text-xs text-[#00696b] text-center font-semibold max-w-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-              <CheckCircle className="w-4 h-4 shrink-0 text-[#00696b]" />
+            <div className={`mt-3 px-4 py-2.5 border-2 border-[#1b1c19] rounded-none text-xs text-center font-semibold max-w-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
+              syncNoticeType === 'warning'
+                ? 'bg-[#fe7e4f]/15 text-[#a43c12]'
+                : 'bg-[#00696b]/10 text-[#00696b]'
+            }`}>
+              {syncNoticeType === 'warning' ? (
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#a43c12]" />
+              ) : (
+                <CheckCircle className="w-4 h-4 shrink-0 text-[#00696b]" />
+              )}
               <span>{syncNotice}</span>
             </div>
           )}
@@ -497,16 +512,16 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
               {/* Button 1: ICS Export */}
               <button
-                onClick={handleSyncClick}
-                disabled={syncState === 'syncing'}
-                className="neobrutal-btn-terracotta px-4 py-3 font-headline font-black text-xs sm:text-sm rounded-none transition-all flex items-center justify-center gap-2"
+                onClick={handleIcsExport}
+                disabled={icsState === 'exporting'}
+                className="neobrutal-btn-terracotta px-4 py-3 font-headline font-black text-xs sm:text-sm rounded-none transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {syncState === 'syncing' ? (
+                {icsState === 'exporting' ? (
                   <>
                     <span className="material-symbols-outlined animate-spin text-base">sync</span>
-                    <span>Syncing...</span>
+                    <span>Downloading...</span>
                   </>
-                ) : syncState === 'synced' ? (
+                ) : icsState === 'exported' ? (
                   <>
                     <CheckCircle className="w-4 h-4" />
                     <span>Downloaded!</span>
@@ -531,18 +546,23 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
               {/* Button 3: Google Calendar */}
               <button
                 onClick={handleGoogleCalendarSync}
-                disabled={syncState === 'syncing'}
-                className="px-4 py-3 bg-white text-[#00696b] border-2 border-[#1b1c19] font-headline font-black text-xs sm:text-sm rounded-none shadow-[3px_3px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={gcalState === 'syncing'}
+                className="px-4 py-3 bg-white text-[#00696b] border-2 border-[#1b1c19] font-headline font-black text-xs sm:text-sm rounded-none shadow-[3px_3px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {syncState === 'syncing' ? (
+                {gcalState === 'syncing' ? (
                   <>
                     <span className="material-symbols-outlined animate-spin text-base">sync</span>
-                    <span>Syncing & Redirecting...</span>
+                    <span>Syncing Schedule...</span>
+                  </>
+                ) : gcalState === 'synced' ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 text-[#00696b]" />
+                    <span>Synced to Calendar!</span>
                   </>
                 ) : (
                   <>
                     <ExternalLink className="w-4 h-4 text-[#00696b]" />
-                    <span>Sync to Google Calendar</span>
+                    <span>Google Calendar</span>
                   </>
                 )}
               </button>
