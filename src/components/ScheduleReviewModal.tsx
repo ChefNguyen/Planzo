@@ -5,6 +5,7 @@ import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar,
 import { exportItineraryToPdf } from '../lib/exportPdf';
 import { auth, signInWithGoogle, connectGoogleCalendarAccount } from '../lib/firebase';
 import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
+import { toCommunityEnglishLabel } from '../lib/communityLabels';
 
 interface ScheduleReviewModalProps {
   itinerary: Itinerary;
@@ -400,7 +401,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                       </div>
                       <span className="text-xs font-semibold text-[#5f6e6e] truncate">Region</span>
                     </div>
-                    <span className="text-xs font-extrabold text-[#1b1c19] truncate text-right flex-1 pl-2" title={itinerary.region}>{itinerary.region}</span>
+                    <span className="text-xs font-extrabold text-[#1b1c19] truncate text-right flex-1 pl-2" title={toCommunityEnglishLabel(itinerary.region)}>{toCommunityEnglishLabel(itinerary.region)}</span>
                   </div>
                 </div>
 

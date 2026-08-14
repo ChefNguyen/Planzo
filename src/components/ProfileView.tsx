@@ -3,6 +3,7 @@ import { UserProfile, Itinerary } from '../types';
 import { User } from '../lib/firebase';
 import { CustomSearchImage } from './CustomSearchImage';
 import { getGoogleCalendarUrl } from '../lib/googleCalendar';
+import { toCommunityEnglishLabel } from '../lib/communityLabels';
 import {
   User as UserIcon,
   Calendar,
@@ -502,7 +503,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                     <div className="absolute top-3 left-3 z-10">
                       <span className="px-2.5 py-0.5 text-[10px] font-headline font-black uppercase border-2 border-[#1b1c19] bg-white text-[#1b1c19]">
-                        {trip.region || trip.destination}
+                        {toCommunityEnglishLabel(trip.region || trip.destination)}
                       </span>
                     </div>
                   </div>
