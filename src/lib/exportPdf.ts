@@ -1,7 +1,8 @@
 import { Itinerary } from '../types';
+import { parseItineraryStartDate } from './googleCalendar';
 
 /**
- * Utility to trigger browser printable PDF export for an Itinerary
+ * Utility to trigger browser printable PDF export for an Itinerary with specific formatted calendar dates.
  */
 export function exportItineraryToPdf(itinerary: Itinerary): void {
   // Create an invisible print iframe to render clean printable HTML without polluting main DOM
@@ -18,6 +19,22 @@ export function exportItineraryToPdf(itinerary: Itinerary): void {
   const doc = printIframe.contentWindow?.document;
   if (!doc) return;
 
+  const baseStartDate = parseItineraryStartDate(itinerary);
+  const endItineraryDate = new Date(baseStartDate);
+  endItineraryDate.setDate(endItineraryDate.getDate() + (itinerary.days.length - 1));
+
+  const formattedStartDateStr = baseStartDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedEndDateStr = endItineraryDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedDateRange = `${formattedStartDateStr} – ${formattedEndDateStr}`;
+
   const vibesHtml = itinerary.vibes
     .map(
       (v) =>
@@ -26,12 +43,26 @@ export function exportItineraryToPdf(itinerary: Itinerary): void {
     .join('');
 
   const daysHtml = itinerary.days
-    .map(
-      (day) => `
+    .map((day) => {
+      const dayDate = new Date(baseStartDate);
+      dayDate.setDate(dayDate.getDate() + (day.dayNumber - 1));
+      const formattedDayDate = dayDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      return `
     <div style="margin-bottom: 24px; page-break-inside: avoid;">
-      <h2 style="color: #00696b; border-bottom: 2px solid #00ced1; padding-bottom: 6px; font-size: 18px; margin-bottom: 12px; font-family: 'Playfair Display', Georgia, serif;">
-        Day ${day.dayNumber}: ${day.title}
-      </h2>
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #00ced1; padding-bottom: 6px; margin-bottom: 12px;">
+        <h2 style="color: #00696b; margin: 0; font-size: 18px; font-family: 'Playfair Display', Georgia, serif;">
+          Day ${day.dayNumber}: ${day.title}
+        </h2>
+        <span style="font-size: 12px; font-weight: bold; color: #a43c12; background: #fe7e4f1a; padding: 3px 10px; border-radius: 4px; border: 1px solid #a43c1240;">
+          📅 ${formattedDayDate}
+        </span>
+      </div>
       <div style="display: flex; flex-direction: column; gap: 10px;">
         ${day.activities
           .map(
@@ -54,8 +85,8 @@ export function exportItineraryToPdf(itinerary: Itinerary): void {
           .join('')}
       </div>
     </div>
-  `
-    )
+  `;
+    })
     .join('');
 
   const htmlContent = `
@@ -94,6 +125,9 @@ export function exportItineraryToPdf(itinerary: Itinerary): void {
             font-size: 13px;
             color: #555;
             margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
           }
           .footer {
             margin-top: 40px;
@@ -114,7 +148,8 @@ export function exportItineraryToPdf(itinerary: Itinerary): void {
           <div class="logo">Planzo AI Travel Guide</div>
           <div class="title">Trip to ${itinerary.destination}</div>
           <div class="meta">
-            <strong>Dates:</strong> ${itinerary.dates} &nbsp;|&nbsp; 
+            <strong>Travel Dates:</strong> ${formattedDateRange} &nbsp;|&nbsp; 
+            <strong>Duration:</strong> ${itinerary.days.length} Days &nbsp;|&nbsp; 
             <strong>Total Stops:</strong> ${itinerary.totalStops} &nbsp;|&nbsp; 
             <strong>Active Hours:</strong> ${itinerary.activeHours} hrs/day
           </div>
