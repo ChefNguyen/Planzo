@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Itinerary, Activity } from '../types';
 import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
-import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi, getGoogleCalendarUrl } from '../lib/googleCalendar';
+import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi, getGoogleCalendarUrl, parseItineraryStartDate } from '../lib/googleCalendar';
 import { exportItineraryToPdf } from '../lib/exportPdf';
 import { auth, signInWithGoogle, connectGoogleCalendarAccount } from '../lib/firebase';
 import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
@@ -28,6 +28,22 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
   const [editStartTime, setEditStartTime] = useState('09:00 AM');
   const [editEndTime, setEditEndTime] = useState('11:00 AM');
   const [editVibe, setEditVibe] = useState('');
+
+  const baseStartDate = parseItineraryStartDate(itinerary);
+  const endItineraryDate = new Date(baseStartDate);
+  endItineraryDate.setDate(endItineraryDate.getDate() + (itinerary.days.length - 1));
+
+  const formattedStartDateStr = baseStartDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedEndDateStr = endItineraryDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedDateRange = `${formattedStartDateStr} – ${formattedEndDateStr}`;
 
   const handleSyncClick = () => {
     setSyncState('syncing');
@@ -171,9 +187,18 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
           <h2 className="font-headline text-2xl sm:text-3xl font-extrabold text-[#1b1c19] text-center tracking-tight">
             Review Your Schedule
           </h2>
-          <p className="text-xs sm:text-sm text-[#5f6e6e] mt-1 text-center font-medium flex items-center justify-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-[#00696b]" />
-            <span className="font-bold text-[#00696b]">{itinerary.destination}</span> • {itinerary.days.length} Days • {itinerary.totalStops} Stops
+          <p className="text-xs sm:text-sm text-[#5f6e6e] mt-1 text-center font-medium flex items-center justify-center gap-1.5 flex-wrap">
+            <span className="font-bold text-[#00696b] flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-[#00696b]" /> {itinerary.destination}
+            </span>
+            <span>•</span>
+            <span className="font-bold text-[#a43c12] bg-[#fe7e4f]/10 border border-[#a43c12]/30 px-2 py-0.5 rounded-none flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-[#a43c12]" /> {formattedDateRange}
+            </span>
+            <span>•</span>
+            <span>{itinerary.days.length} Days</span>
+            <span>•</span>
+            <span>{itinerary.totalStops} Stops</span>
           </p>
 
           {/* Sync Notice Alert Banner */}
@@ -191,24 +216,39 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
             
             {/* Left Column: Days Timeline */}
             <div className="lg:col-span-8 space-y-7">
-              {itinerary.days.map((day, dayIdx) => (
-                <div key={day.dayNumber} className="relative">
-                  {/* Day Header Badge */}
-                  <div className="flex items-center justify-between mb-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center justify-center font-headline font-black text-sm">
-                        {String(day.dayNumber).padStart(2, '0')}
-                      </div>
-                      <div>
-                        <h4 className="font-headline text-lg sm:text-xl font-bold text-[#1b1c19] leading-snug">
-                          Day {day.dayNumber}: {day.title}
-                        </h4>
-                        <span className="text-[11px] text-[#6b7a7a] font-medium">
-                          {day.activities.length} stops planned
-                        </span>
+              {itinerary.days.map((day, dayIdx) => {
+                const dayDate = new Date(baseStartDate);
+                dayDate.setDate(dayDate.getDate() + (day.dayNumber - 1));
+                const formattedDayDate = dayDate.toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                });
+
+                return (
+                  <div key={day.dayNumber} className="relative">
+                    {/* Day Header Badge */}
+                    <div className="flex items-center justify-between mb-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-none bg-[#00696b] text-white border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] flex items-center justify-center font-headline font-black text-sm">
+                          {String(day.dayNumber).padStart(2, '0')}
+                        </div>
+                        <div>
+                          <h4 className="font-headline text-lg sm:text-xl font-bold text-[#1b1c19] leading-snug">
+                            Day {day.dayNumber}: {day.title}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#a43c12] bg-[#fe7e4f]/10 border border-[#a43c12]/30 px-2 py-0.5 rounded-none">
+                              <Calendar className="w-3 h-3 text-[#a43c12]" /> {formattedDayDate}
+                            </span>
+                            <span className="text-[11px] text-[#6b7a7a] font-medium">
+                              • {day.activities.length} stops planned
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
                   {/* Day Activities List */}
                   <div className="space-y-3.5 pl-3 sm:pl-4 border-l-2 border-dashed border-[#1b1c19]/30 ml-4">
@@ -358,7 +398,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                     )}
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
 
             {/* Right Column: Trip Summary Card Widget */}
@@ -374,6 +415,16 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                 </div>
 
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="p-1.5 rounded-none bg-[#a43c12]/15 text-[#a43c12] border border-[#1b1c19] shrink-0">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Travel Dates</span>
+                    </div>
+                    <span className="text-xs font-extrabold text-[#a43c12] truncate text-right flex-1 pl-2" title={formattedDateRange}>{formattedDateRange}</span>
+                  </div>
+
                   <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <div className="p-1.5 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
