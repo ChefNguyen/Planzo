@@ -59,6 +59,7 @@ gcloud run deploy $SERVICE_NAME `
   --max-instances 10 `
   --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest `
   --set-secrets GOOGLE_MAPS_PLATFORM_KEY=GOOGLE_MAPS_PLATFORM_KEY:latest `
+  --set-secrets PEXELS_API_KEY=PEXELS_API_KEY:latest `
   --set-env-vars NODE_ENV=production
 
 Write-Host "==> [6/6] Getting deployed service URL..." -ForegroundColor Green

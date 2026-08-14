@@ -669,7 +669,7 @@ async function fetchPlaceDetails(placeName: string, locationOrDest: string, inde
 }
 
 async function fetchPexelsPhoto(query: string, fallbackQuery?: string): Promise<string | undefined> {
-  const apiKey = process.env.PEXELS_API_KEY;
+  const apiKey = process.env.PEXELS_API_KEY || 'thQ6usGDSNEoWQQsMNprXF8vSjLt2qyVN8jlXFAFOvZpt4jidsRosUhL';
   if (!apiKey) return undefined;
   try {
     const res = await fetch(
@@ -768,6 +768,20 @@ async function fetchPhotoWithCache(query: string, destinationFallback?: string):
       let photoUrl = await fetchPexelsPhoto(query, destinationFallback);
       if (!photoUrl) {
         photoUrl = await fetchWikimediaPhoto(query);
+      }
+      if (!photoUrl && destinationFallback) {
+        photoUrl = await fetchPexelsPhoto(destinationFallback);
+      }
+      if (!photoUrl) {
+        const hash = Array.from(query).reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0);
+        const fallbackPhotos = [
+          'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1476514525535-ce74f45814d9?auto=format&fit=crop&w=800&q=80',
+        ];
+        photoUrl = fallbackPhotos[Math.abs(hash) % fallbackPhotos.length];
       }
 
       // Cache result
