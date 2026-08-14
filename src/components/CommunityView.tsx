@@ -117,7 +117,7 @@ export const CommunityView = React.memo<CommunityViewProps>(({ trips, onSelectTr
                     onClick={() => onSelectTrip(trip)}
                     className="w-full neobrutal-btn-teal py-3 font-headline font-black uppercase text-xs sm:text-sm flex items-center justify-center gap-2 transition-all rounded-none"
                   >
-                    <span>Explore & Clone Itinerary</span>
+                    <span>Explore Itinerary</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </button>
                 </div>

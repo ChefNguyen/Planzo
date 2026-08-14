@@ -86,17 +86,28 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
             ? `Successfully synced ${apiResult.count} events directly to Google Calendar (${gcalEmail || 'Selected Account'})!${apiResult.skippedCount > 0 ? ` Skipped ${apiResult.skippedCount} existing events.` : ''}`
             : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
         );
-        window.open(getGoogleCalendarUrl(gcalEmail), '_blank');
+        const targetUrl = getGoogleCalendarUrl(gcalEmail);
+        const opened = window.open(targetUrl, '_blank');
+        if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+          window.location.href = targetUrl;
+        }
         onConfirmSync();
         return;
       }
     }
 
     // Fallback if API token is missing or denied
-    syncAllToGoogleCalendar(itinerary);
+    const importUrl = gcalEmail
+      ? `https://calendar.google.com/calendar/r/settings/export?authuser=${encodeURIComponent(gcalEmail)}`
+      : 'https://calendar.google.com/calendar/r/settings/export';
+    downloadItineraryIcs(itinerary);
     setTimeout(() => {
       setSyncState('synced');
       setSyncNotice(`Created .ics file & opened Google Calendar Import page. Drag and drop file to sync!`);
+      const opened = window.open(importUrl, '_blank');
+      if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+        window.location.href = importUrl;
+      }
       onConfirmSync();
     }, 800);
   };
@@ -520,10 +531,20 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
               {/* Button 3: Google Calendar */}
               <button
                 onClick={handleGoogleCalendarSync}
-                className="px-4 py-3 bg-white text-[#00696b] border-2 border-[#1b1c19] font-headline font-black text-xs sm:text-sm rounded-none shadow-[3px_3px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                disabled={syncState === 'syncing'}
+                className="px-4 py-3 bg-white text-[#00696b] border-2 border-[#1b1c19] font-headline font-black text-xs sm:text-sm rounded-none shadow-[3px_3px_0px_0px_#1b1c19] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <ExternalLink className="w-4 h-4 text-[#00696b]" />
-                <span>Google Calendar</span>
+                {syncState === 'syncing' ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-base">sync</span>
+                    <span>Syncing & Redirecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="w-4 h-4 text-[#00696b]" />
+                    <span>Sync to Google Calendar</span>
+                  </>
+                )}
               </button>
             </div>
 
