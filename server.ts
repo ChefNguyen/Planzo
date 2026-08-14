@@ -91,6 +91,48 @@ function normalizeVibeTagToEnglish(tag: string): string {
   return tag.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+const REGION_MAP_TO_EN: Record<string, string> = {
+  'dong nam a': 'Southeast Asia',
+  'dong nam a / vietnam': 'Southeast Asia / Vietnam',
+  'chau a': 'Asia',
+  'chau a / vietnam': 'Asia / Vietnam',
+  'chau au': 'Europe',
+  'chau my': 'Americas',
+  'bac my': 'North America',
+  'nam my': 'South America',
+  'chau phi': 'Africa',
+  'chau uc': 'Oceania',
+  'mien trung': 'Central Vietnam',
+  'mien trung, vietnam': 'Central Vietnam',
+  'mien bac': 'Northern Vietnam',
+  'mien bac, vietnam': 'Northern Vietnam',
+  'mien nam': 'Southern Vietnam',
+  'mien nam, vietnam': 'Southern Vietnam',
+  'tay nguyen': 'Central Highlands',
+  'dong bang song cuu long': 'Mekong Delta',
+};
+
+function normalizeRegionToEnglish(region: string): string {
+  if (!region) return 'Central District';
+  const clean = region
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .trim()
+    .toLowerCase();
+  if (REGION_MAP_TO_EN[clean]) return REGION_MAP_TO_EN[clean];
+  return region
+    .replace(/\bdong nam a\b/gi, 'Southeast Asia')
+    .replace(/\bchau a\b/gi, 'Asia')
+    .replace(/\bchau au\b/gi, 'Europe')
+    .replace(/\bmien trung\b/gi, 'Central Vietnam')
+    .replace(/\bmien bac\b/gi, 'Northern Vietnam')
+    .replace(/\bmien nam\b/gi, 'Southern Vietnam')
+    .replace(/\btay nguyen\b/gi, 'Central Highlands')
+    .replace(/Central Vietnam,\s*Vietnam/gi, 'Central Vietnam');
+}
+
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -285,7 +327,7 @@ async function startServer() {
       let systemPrompt = `You are Planzo AI, an elite, stylish travel itinerary generator. Your job is to generate a highly detailed, curated EXACTLY ${requestedDays}-day travel itinerary (containing Day 1 through Day ${requestedDays}) with specific time slots (specifying explicit Start Time - End Time with default duration of ~2 hours per stop, e.g. "09:00 AM - 11:00 AM", "01:30 PM - 03:30 PM"), iconic & hidden gem destinations, vivid vibe descriptions, and location details. Adhere closely to user constraints: ${budgetText}, ${paceText}.
 
 CRITICAL MANDATORY LANGUAGE RULES:
-- The top-level 'vibes' array tags MUST ALWAYS be concise ENGLISH strings (e.g., 'Beach & Island', 'Culture', 'Foodie', 'Relax', 'Nightlife', 'Adventure', 'Nature', 'Chill', 'Luxury', 'Shopping', 'Hidden Gems', 'Spiritual', 'Heritage').
+- The top-level 'region' and 'vibes' array tags MUST ALWAYS be in ENGLISH (e.g. region: 'Central Vietnam', 'Northern Vietnam', 'Southern Vietnam', 'Southeast Asia', 'Europe', 'East Asia', 'Kanto Region'; vibes: ['Beach & Island', 'Culture', 'Foodie', 'Relax', 'Nightlife', 'Adventure', 'Nature', 'Chill', 'Luxury', 'Shopping', 'Hidden Gems', 'Spiritual', 'Heritage']).
 - ALWAYS write 100% of ALL titles, activity descriptions, vibe notes ("vibe" field), location details ("location" field), and day headings in VIETNAMESE (Tiếng Việt), regardless of whether the destination is in Vietnam or abroad (e.g., Tokyo, Paris, Rome, Kyoto, Da Nang, etc.) and regardless of whether input mode is Structured or AI Prompt Genius.
 - Do NOT output English for titles, activity descriptions, or vibe notes. Keep all generated textual prose strictly in natural, engaging Vietnamese (Tiếng Việt).`;
 
@@ -429,7 +471,7 @@ CRITICAL MANDATORY LANGUAGE RULES:
           vibes: englishVibes,
           totalStops: parsed.totalStops || daysWithPlaces.reduce((acc: number, day: any) => acc + day.activities.length, 0),
           activeHours: parsed.activeHours || 6.5,
-          region: parsed.region || 'Central District',
+          region: normalizeRegionToEnglish(parsed.region || 'Central District'),
           createdAt: new Date().toISOString(),
           days: daysWithPlaces,
         };
