@@ -280,16 +280,16 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                     {/* Boarding-Pass Activity Card with Square Thumbnail & Drag Handle */}
                     <div
                       onClick={() => setSelectedActivityId(act.id)}
-                      className={`p-3.5 rounded-none border-2 transition-all cursor-pointer bg-white text-[#1b1c19] relative ${isBeingDragged ? 'opacity-40 border-dashed border-[#00696b]' : ''
-                        } ${isDragOverTarget ? 'border-[#00ced1] shadow-[5px_5px_0px_0px_#00ced1] scale-[1.01]' : ''
+                      className={`p-4 rounded-none border-2 transition-all cursor-pointer bg-white text-[#1b1c19] relative ${isBeingDragged ? 'opacity-40 border-dashed border-[#00696b]' : ''
+                        } ${isDragOverTarget ? 'border-[#00ced1] shadow-[6px_6px_0px_0px_#00ced1] scale-[1.01]' : ''
                         } ${isSelected
-                          ? 'border-[#00696b] shadow-[4px_4px_0px_0px_#00696b] -translate-y-0.5'
+                          ? 'border-[#00696b] shadow-[4px_4px_0px_0px_#00696b] bg-[#fafdfd] -translate-y-0.5'
                           : 'border-[#1b1c19] shadow-[3px_3px_0px_0px_#1b1c19] hover:shadow-[5px_5px_0px_0px_#1b1c19] hover:-translate-y-0.5'
                         }`}
                     >
                       <div className="flex flex-col sm:flex-row items-start gap-3.5">
                         {/* Compact Square Image Banner */}
-                        <div className="w-full sm:w-24 h-28 sm:h-24 rounded-none overflow-hidden shrink-0 bg-[#f0eee6] relative border-2 border-[#1b1c19] group">
+                        <div className="w-full sm:w-24 h-28 sm:h-24 rounded-none overflow-hidden shrink-0 bg-[#f0eee6] relative border-2 border-[#1b1c19] shadow-[2px_2px_0px_0px_#1b1c19] group">
                           <img
                             src={photoUrl}
                             alt={act.title}
@@ -304,7 +304,7 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                               const { startTime, endTime } = parseActivityTimeRange(act.time);
                               return (
                                 <div
-                                  className="inline-flex items-center gap-1 bg-[#00ced1]/15 border-2 border-[#1b1c19] px-2 py-0.5 shadow-[1px_1px_0px_0px_#1b1c19]"
+                                  className="inline-flex items-center gap-1.5 bg-[#f0f9f9] border-2 border-[#1b1c19] px-2.5 py-1 shadow-[2px_2px_0px_0px_#1b1c19] hover:bg-[#e0f4f4] transition-colors"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <input
@@ -315,10 +315,10 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                                         handleTimeChange(act.id, hhmmToTimeString(e.target.value), endTime);
                                       }
                                     }}
-                                    className="text-[11px] font-headline font-black text-[#00696b] bg-transparent border-0 p-0 text-center focus:outline-none cursor-pointer"
+                                    className="text-[11px] font-headline font-black text-[#00696b] bg-transparent border-0 p-0 text-center focus:outline-none cursor-pointer tracking-tight"
                                     title="Chọn Giờ Bắt Đầu"
                                   />
-                                  <span className="text-[11px] font-black text-[#1b1c19]/60">–</span>
+                                  <span className="text-[10px] font-black text-[#1b1c19]/40">➔</span>
                                   <input
                                     type="time"
                                     value={timeStringToHHMM(endTime)}
@@ -327,7 +327,7 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                                         handleTimeChange(act.id, startTime, hhmmToTimeString(e.target.value));
                                       }
                                     }}
-                                    className="text-[11px] font-headline font-black text-[#00696b] bg-transparent border-0 p-0 text-center focus:outline-none cursor-pointer"
+                                    className="text-[11px] font-headline font-black text-[#00696b] bg-transparent border-0 p-0 text-center focus:outline-none cursor-pointer tracking-tight"
                                     title="Chọn Giờ Kết Thúc"
                                   />
                                 </div>
@@ -337,7 +337,7 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                             {/* Drag Handle for Mouse Reordering */}
                             <div className="flex items-center">
                               <span
-                                className="p-1.5 text-[#a0afaf] hover:text-[#00696b] cursor-grab active:cursor-grabbing transition-colors"
+                                className="p-1.5 rounded-none border border-transparent hover:border-[#1b1c19] hover:bg-[#f0eee6] text-[#6b7a7a] hover:text-[#1b1c19] cursor-grab active:cursor-grabbing transition-all"
                                 title="Kéo để đổi thứ tự địa điểm"
                               >
                                 <GripVertical className="w-4 h-4" />
@@ -345,15 +345,15 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                             </div>
                           </div>
 
-                          <h4 className="font-bold text-base text-[#1b1c19] mt-1 leading-snug">
+                          <h4 className="font-bold text-base text-[#1b1c19] mt-2 leading-snug">
                             {act.title}
                           </h4>
 
                           {/* Rating & Reviews */}
                           {(act.rating || act.userRatingsTotal) && (
-                            <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex items-center gap-1.5 mt-1.5">
                               {act.rating && (
-                                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-[#a43c12]">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#fbf5eb] border border-[#a43c12]/30 text-[11px] font-bold text-[#a43c12]">
                                   <span className="text-amber-500">★</span> {act.rating.toFixed(1)}
                                 </span>
                               )}
@@ -365,13 +365,13 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                             </div>
                           )}
 
-                          <p className="text-xs text-[#3b4949] italic mt-1 line-clamp-2">
+                          <p className="text-xs text-[#3b4949] italic mt-2 pl-2.5 border-l-2 border-[#00696b] line-clamp-2 leading-relaxed">
                             "{act.vibe}"
                           </p>
 
                           {act.location && (
-                            <div className="flex items-center gap-1 text-[11px] text-[#6b7a7a] mt-2 border-t pt-2 border-[#1b1c19]/15">
-                              <MapPin className="w-3 h-3 text-[#00696b] shrink-0" />
+                            <div className="flex items-center gap-1.5 text-[11px] text-[#6b7a7a] mt-2.5 border-t pt-2 border-[#1b1c19]/10">
+                              <MapPin className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
                               <span className="truncate">{act.location}</span>
                             </div>
                           )}
