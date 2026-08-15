@@ -235,7 +235,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
               <div style="font-size: 14.5px; font-weight: 900; color: ${popupText}; line-height: 1.25; font-family: 'Plus Jakarta Sans', sans-serif;">${act.title}</div>
               
               ${act.location ? `<div style="font-size: 11px; color: ${popupSubtext}; margin-top: 4px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">
-                <span style="color: #00696b; font-weight: 900;">📍</span> ${act.location}
+                ${act.location}
               </div>` : ''}
 
               <div style="display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; font-weight: 800; color: #a43c12; font-family: 'Plus Jakarta Sans', sans-serif;">
