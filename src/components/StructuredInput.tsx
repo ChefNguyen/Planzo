@@ -310,6 +310,9 @@ export const StructuredInput: React.FC<StructuredInputProps> = ({
                 setIsDestFocused(true);
               }}
               placeholder="Search city, e.g. Tokyo, Kyoto, Da Nang..."
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               className="w-full pl-12 pr-10 py-3.5 bg-white border-2 border-[#1b1c19] focus:border-[#00696b] focus:shadow-[3px_3px_0px_0px_#00696b] outline-none font-body text-base text-[#1b1c19] placeholder:text-[#6b7a7a] transition-all rounded-none shadow-[2px_2px_0px_0px_#1b1c19] font-bold"
             />
             {formData.destination ? (

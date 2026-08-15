@@ -339,6 +339,9 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
                               placeholder="Activity Title"
+                              spellCheck={false}
+                              autoCorrect="off"
+                              autoCapitalize="off"
                               className="w-full font-bold text-base text-[#1b1c19] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none"
                             />
 
@@ -347,6 +350,9 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                               value={editVibe}
                               onChange={(e) => setEditVibe(e.target.value)}
                               placeholder="Vibe note..."
+                              spellCheck={false}
+                              autoCorrect="off"
+                              autoCapitalize="off"
                               className="w-full text-xs italic text-[#3b4949] border-2 border-[#1b1c19] bg-white rounded-none p-2 focus:outline-none"
                             />
 
