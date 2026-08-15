@@ -63,25 +63,13 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     setGcalState('syncing');
     setSyncNotice(null);
 
-    // Pre-open the new tab in the synchronous click event to avoid browser popup blocking
-    let newTab: Window | null = null;
-    try {
-      newTab = window.open('about:blank', '_blank');
-      if (newTab) {
-        newTab.document.title = 'Connecting to Google Calendar...';
-      }
-    } catch {
-      newTab = null;
-    }
-
     let token = sessionStorage.getItem('gcal_access_token');
     let gcalEmail = sessionStorage.getItem('gcal_account_email');
 
-    // Single-popup OAuth flow: connectGoogleCalendarAccount signs in and requests Calendar permissions in 1 step
+    // Single-popup OAuth flow: connectGoogleCalendarAccount signs in and requests Calendar permissions in 1 step without prior window.open conflicts
     if (!token) {
       const res = await connectGoogleCalendarAccount();
       if (res?.error) {
-        if (newTab && !newTab.closed) newTab.close();
         setGcalState('idle');
         setSyncNoticeType('warning');
         if (res.error === 'cancelled') {
@@ -100,7 +88,6 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     }
 
     if (!token) {
-      if (newTab && !newTab.closed) newTab.close();
       setGcalState('idle');
       setSyncNoticeType('warning');
       setSyncNotice('Unable to acquire Google Calendar access token. Please try again.');
@@ -130,15 +117,9 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
           : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
       );
       const targetUrl = getGoogleCalendarUrl(gcalEmail);
-      if (newTab && !newTab.closed) {
-        newTab.location.href = targetUrl;
-        newTab.focus();
-      } else {
-        window.open(targetUrl, '_blank');
-      }
+      window.open(targetUrl, '_blank');
       onConfirmSync();
     } else {
-      if (newTab && !newTab.closed) newTab.close();
       setGcalState('idle');
       setSyncNoticeType('warning');
       setSyncNotice(apiResult.error || 'Failed to sync events to Google Calendar. Please check calendar permissions.');
@@ -234,17 +215,28 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
           {/* Sync Notice Alert Banner */}
           {syncNotice && (
-            <div className={`mt-3 px-4 py-2.5 border-2 border-[#1b1c19] rounded-none text-xs text-center font-semibold max-w-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
+            <div className={`mt-3 px-4 py-2.5 border-2 border-[#1b1c19] rounded-none text-xs text-center font-semibold max-w-2xl flex flex-col sm:flex-row items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
               syncNoticeType === 'warning'
                 ? 'bg-[#fe7e4f]/15 text-[#a43c12]'
                 : 'bg-[#00696b]/10 text-[#00696b]'
             }`}>
-              {syncNoticeType === 'warning' ? (
-                <AlertCircle className="w-4 h-4 shrink-0 text-[#a43c12]" />
-              ) : (
-                <CheckCircle className="w-4 h-4 shrink-0 text-[#00696b]" />
+              <div className="flex items-center gap-2">
+                {syncNoticeType === 'warning' ? (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#a43c12]" />
+                ) : (
+                  <CheckCircle className="w-4 h-4 shrink-0 text-[#00696b]" />
+                )}
+                <span>{syncNotice}</span>
+              </div>
+              {syncNoticeType === 'warning' && (
+                <button
+                  onClick={() => syncAllToGoogleCalendar(itinerary)}
+                  className="underline font-black text-[#a43c12] hover:text-[#8b320e] cursor-pointer shrink-0 ml-1"
+                  title="Download .ics and open Google Calendar Import"
+                >
+                  ⚡ 1-Click Import to Calendar
+                </button>
               )}
-              <span>{syncNotice}</span>
             </div>
           )}
         </div>

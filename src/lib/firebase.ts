@@ -100,6 +100,11 @@ export const connectGoogleCalendarAccount = async () => {
     return { user: result.user, accessToken, email: gcalEmail, error: null };
   } catch (error: any) {
     console.warn('Google Calendar OAuth error:', error);
+    console.error('Google Calendar OAuth detailed error:', {
+      code: error?.code,
+      message: error?.message,
+      customData: error?.customData,
+    });
     if (
       error?.code === 'auth/popup-closed-by-user' ||
       error?.code === 'auth/cancelled-popup-request'
