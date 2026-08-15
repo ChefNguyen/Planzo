@@ -10,11 +10,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', 'Inter', sans-serif;
   }
 
-  input, textarea, select, button {
+  input,
+  textarea,
+  select,
+  button {
     font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
@@ -61,11 +69,13 @@
   font-weight: 800;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
+
 .neobrutal-btn-terracotta:hover:not(:disabled) {
   background-color: #8b320e;
   transform: translate(-2px, -2px);
   box-shadow: 5px 5px 0px 0px #1b1c19;
 }
+
 .neobrutal-btn-terracotta:active:not(:disabled) {
   transform: translate(0px, 0px);
   box-shadow: 0px 0px 0px 0px #1b1c19;
@@ -81,11 +91,13 @@
   font-weight: 800;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
+
 .neobrutal-btn-teal:hover:not(:disabled) {
   background-color: #005354;
   transform: translate(-2px, -2px);
   box-shadow: 5px 5px 0px 0px #1b1c19;
 }
+
 .neobrutal-btn-teal:active:not(:disabled) {
   transform: translate(0px, 0px);
   box-shadow: 0px 0px 0px 0px #1b1c19;
@@ -107,13 +119,16 @@
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 105, 107, 0.2);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 105, 107, 0.4);
 }
