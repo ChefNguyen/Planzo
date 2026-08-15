@@ -214,3 +214,39 @@
   background-color: #f5f3ee !important;
   color: #00696b !important;
 }
+
+/* Leaflet Popup Google Maps Button UX */
+.popup-gmaps-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin-top: 12px !important;
+  background-color: #00696b !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  padding: 9px 12px !important;
+  border-radius: 0px !important;
+  border: 2px solid #1b1c19 !important;
+  box-shadow: 3px 3px 0px 0px #1b1c19 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+}
+
+.popup-gmaps-btn:hover {
+  background-color: #005354 !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0px 0px #1b1c19 !important;
+  color: #ffffff !important;
+}
+
+.popup-gmaps-btn:active {
+  transform: translate(0px, 0px) !important;
+  box-shadow: 1px 1px 0px 0px #1b1c19 !important;
+}
