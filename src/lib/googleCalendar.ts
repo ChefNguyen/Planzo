@@ -406,9 +406,17 @@ export async function syncItineraryToGoogleCalendarApi(
         if (res.ok) {
           syncedCount++;
         } else {
-          console.warn('GCal API sync event warning:', await res.text());
+          const errText = await res.text();
+          console.warn('GCal API sync event warning:', errText);
+          if (res.status === 401) {
+            return { success: false, count: syncedCount, skippedCount, error: '401: Google Calendar access token expired or invalid.' };
+          }
         }
       }
+    }
+
+    if (syncedCount === 0 && skippedCount === 0 && itinerary.days.some(d => d.activities.length > 0)) {
+      return { success: false, count: 0, skippedCount: 0, error: 'Failed to create events in Google Calendar. Please check calendar permissions.' };
     }
 
     return { success: true, count: syncedCount, skippedCount };

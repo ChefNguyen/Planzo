@@ -77,26 +77,22 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
     let token = sessionStorage.getItem('gcal_access_token');
     let gcalEmail = sessionStorage.getItem('gcal_account_email');
 
+    // Single-popup OAuth flow: connectGoogleCalendarAccount signs in and requests Calendar permissions in 1 step
     if (!token) {
-      if (!auth.currentUser) {
-        const user = await signInWithGoogle();
-        if (!user) {
-          if (newTab && !newTab.closed) newTab.close();
-          setGcalState('idle');
-          return;
-        }
-      }
-
       const res = await connectGoogleCalendarAccount();
       if (res?.error) {
         if (newTab && !newTab.closed) newTab.close();
         setGcalState('idle');
         setSyncNoticeType('warning');
-        setSyncNotice(
-          res.error === 'cancelled'
-            ? 'Google Calendar sign-in was cancelled.'
-            : 'Google Calendar permission was not granted. Please allow access to sync your schedule directly.'
-        );
+        if (res.error === 'cancelled') {
+          setSyncNotice('Google Calendar sign-in was closed or cancelled.');
+        } else if (res.error === 'popup_blocked') {
+          setSyncNotice('Browser blocked the sign-in popup. Please allow popups for Planzo and try again.');
+        } else if (res.error === 'access_denied') {
+          setSyncNotice('Google Calendar permission was not granted or this account is not registered as a Test User in Google Cloud Console.');
+        } else {
+          setSyncNotice('Google Calendar authorization failed. Please try again.');
+        }
         return;
       }
       token = res?.accessToken || sessionStorage.getItem('gcal_access_token');
@@ -111,7 +107,20 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
       return;
     }
 
-    const apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
+    let apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
+
+    // If token expired (401), clear session and retry once with fresh OAuth popup
+    if (!apiResult.success && apiResult.error?.includes('401')) {
+      sessionStorage.removeItem('gcal_access_token');
+      sessionStorage.removeItem('gcal_account_email');
+      const res = await connectGoogleCalendarAccount();
+      if (res?.accessToken) {
+        token = res.accessToken;
+        gcalEmail = res.email || '';
+        apiResult = await syncItineraryToGoogleCalendarApi(itinerary, token);
+      }
+    }
+
     if (apiResult.success && (apiResult.count > 0 || apiResult.skippedCount > 0)) {
       setGcalState('synced');
       setSyncNoticeType('success');

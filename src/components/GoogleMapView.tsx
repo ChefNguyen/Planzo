@@ -250,7 +250,6 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
               
               <!-- Hard Neobrutalist CTA Button with enhanced UX & Hover -->
               <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="popup-gmaps-btn" title="Open on Google Maps">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span>View on Google Maps</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
               </a>

@@ -102,13 +102,15 @@ export const connectGoogleCalendarAccount = async () => {
     console.warn('Google Calendar OAuth error:', error);
     if (
       error?.code === 'auth/popup-closed-by-user' ||
-      error?.code === 'auth/cancelled-popup-request' ||
-      error?.code === 'auth/popup-blocked'
+      error?.code === 'auth/cancelled-popup-request'
     ) {
       return { user: null, accessToken: null, email: null, error: 'cancelled' };
     }
+    if (error?.code === 'auth/popup-blocked') {
+      return { user: null, accessToken: null, email: null, error: 'popup_blocked' };
+    }
     // Google Cloud OAuth Unverified / Testing 403 access_denied
-    return { user: null, accessToken: null, email: null, error: 'access_denied' };
+    return { user: null, accessToken: null, email: null, error: 'access_denied', message: error?.message };
   }
 };
 
