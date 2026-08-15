@@ -266,28 +266,14 @@
   box-shadow: 1px 1px 0px 0px #1b1c19 !important;
 }
 
-/* Hide all browser-native WebKit clock/calendar icons inside time inputs */
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="date"]::-webkit-calendar-picker-indicator {
-  display: none !important;
-  -webkit-appearance: none !important;
+/* Keep time inputs clean without visible duplicate icons, while fully clickable for native clock picker */
+input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0 !important;
-  width: 0 !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-  pointer-events: none !important;
+  cursor: pointer !important;
 }
 
 input[type="time"]::-webkit-inner-spin-button,
 input[type="time"]::-webkit-clear-button {
   display: none !important;
   -webkit-appearance: none !important;
-}
-
-input[type="time"] {
-  -webkit-appearance: none !important;
-  -moz-appearance: textfield !important;
-  appearance: none !important;
 }

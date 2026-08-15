@@ -301,25 +301,35 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                                 <input
                                   type="time"
                                   value={timeStringToHHMM(editStartTime)}
+                                  onClick={(e) => {
+                                    try {
+                                      e.currentTarget.showPicker?.();
+                                    } catch {}
+                                  }}
                                   onChange={(e) => {
                                     if (e.target.value) {
                                       setEditStartTime(hhmmToTimeString(e.target.value));
                                     }
                                   }}
                                   className="text-xs font-bold text-[#00696b] bg-white border-2 border-[#1b1c19] px-2.5 py-1 rounded-none text-center focus:outline-none focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
-                                  title="Start Time"
+                                  title="Click to pick start time"
                                 />
                                 <span className="text-xs font-black text-[#1b1c19]">–</span>
                                 <input
                                   type="time"
                                   value={timeStringToHHMM(editEndTime)}
+                                  onClick={(e) => {
+                                    try {
+                                      e.currentTarget.showPicker?.();
+                                    } catch {}
+                                  }}
                                   onChange={(e) => {
                                     if (e.target.value) {
                                       setEditEndTime(hhmmToTimeString(e.target.value));
                                     }
                                   }}
                                   className="text-xs font-bold text-[#00696b] bg-white border-2 border-[#1b1c19] px-2.5 py-1 rounded-none text-center focus:outline-none focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
-                                  title="End Time"
+                                  title="Click to pick end time"
                                 />
                               </div>
                             </div>
