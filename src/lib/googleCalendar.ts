@@ -2,12 +2,25 @@ import { Itinerary, Activity } from '../types';
 import { auth } from './firebase';
 
 /**
- * Returns a stable Google Calendar home URL.
- * The /u/<email>/ path format returns 404, and /u/0 style indexes depend on
- * the browser session, so the user may need to switch accounts manually.
+ * Returns a Google Calendar URL targeting the authenticated user's email (?authuser=...)
+ * and optionally focusing on the specific month/day of the itinerary.
  */
-export function getGoogleCalendarUrl(_email?: string | null): string {
-  return 'https://calendar.google.com/calendar/r';
+export function getGoogleCalendarUrl(email?: string | null, itinerary?: Partial<Itinerary>): string {
+  let datePath = 'r';
+  if (itinerary) {
+    try {
+      const startDate = parseItineraryStartDate(itinerary);
+      const y = startDate.getFullYear();
+      const m = startDate.getMonth() + 1;
+      const d = startDate.getDate();
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        datePath = `r/month/${y}/${m}/${d}`;
+      }
+    } catch {}
+  }
+  
+  const authUserParam = email ? `?authuser=${encodeURIComponent(email)}` : '';
+  return `https://calendar.google.com/calendar/${datePath}${authUserParam}`;
 }
 
 function formatDateToIcsString(date: Date): string {

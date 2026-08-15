@@ -116,7 +116,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
           ? `Successfully synced ${apiResult.count} events directly to Google Calendar (${gcalEmail || 'Selected Account'})!${apiResult.skippedCount > 0 ? ` Skipped ${apiResult.skippedCount} existing events.` : ''}`
           : `All events already exist in Google Calendar (${gcalEmail || 'Selected Account'}), no duplicates created.`
       );
-      const targetUrl = getGoogleCalendarUrl(gcalEmail);
+      const targetUrl = getGoogleCalendarUrl(gcalEmail, itinerary);
       window.open(targetUrl, '_blank');
       onConfirmSync();
     } else {
