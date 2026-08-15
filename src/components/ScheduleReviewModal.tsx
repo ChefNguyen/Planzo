@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Itinerary, Activity } from '../types';
-import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
+import { MapPin, Clock, Map, Edit2, Trash2, CheckCircle, Plus, X, Calendar, Download, ExternalLink, Sparkles, AlertCircle, Hourglass, Footprints, Zap, Compass } from 'lucide-react';
 import { downloadItineraryIcs, createGoogleCalendarUrl, syncAllToGoogleCalendar, syncItineraryToGoogleCalendarApi, getGoogleCalendarUrl, parseItineraryStartDate } from '../lib/googleCalendar';
 import { exportItineraryToPdf } from '../lib/exportPdf';
 import { auth, signInWithGoogle, connectGoogleCalendarAccount } from '../lib/firebase';
@@ -291,10 +291,11 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                             key={act.id}
                             className="bg-white p-4.5 rounded-none border-2 border-[#1b1c19] shadow-[3px_3px_0px_0px_#00ced1] space-y-3 animate-in fade-in"
                           >
-                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                              <label className="text-[11px] font-headline font-black uppercase text-[#00696b] tracking-wider flex items-center gap-1.5 shrink-0">
-                                <Clock className="w-3.5 h-3.5 text-[#00696b]" /> Time:
-                              </label>
+                            {/* Time Editor */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] font-black uppercase tracking-wider text-[#00696b] bg-[#00ced1]/20 border border-[#00696b]/30 px-2 py-0.5 rounded-none">
+                                Time Slot
+                              </span>
                               <div className="flex items-center gap-1.5">
                                 <input
                                   type="time"
@@ -304,10 +305,10 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                                       setEditStartTime(hhmmToTimeString(e.target.value));
                                     }
                                   }}
-                                  className="text-xs font-bold text-[#00696b] bg-[#00ced1]/15 border-2 border-[#1b1c19] px-2 py-1 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
-                                  title="Chọn Giờ Bắt Đầu"
+                                  className="text-xs font-bold text-[#00696b] bg-white border-2 border-[#1b1c19] px-2.5 py-1 rounded-none text-center focus:outline-none focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                  title="Start Time"
                                 />
-                                <span className="text-xs font-black text-[#1b1c19]">-</span>
+                                <span className="text-xs font-black text-[#1b1c19]">–</span>
                                 <input
                                   type="time"
                                   value={timeStringToHHMM(editEndTime)}
@@ -316,8 +317,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                                       setEditEndTime(hhmmToTimeString(e.target.value));
                                     }
                                   }}
-                                  className="text-xs font-black text-[#00696b] bg-[#00ced1]/30 border-2 border-[#1b1c19] px-2 py-1 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
-                                  title="Chọn Giờ Kết Thúc"
+                                  className="text-xs font-bold text-[#00696b] bg-white border-2 border-[#1b1c19] px-2.5 py-1 rounded-none text-center focus:outline-none focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                  title="End Time"
                                 />
                               </div>
                             </div>
@@ -341,7 +342,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                             <div className="flex justify-end gap-2 pt-1">
                               <button
                                 onClick={() => setEditingActivity(null)}
-                                className="px-3.5 py-1.5 text-xs text-[#6b7a7a] border-2 border-[#1b1c19] rounded-none bg-white font-semibold"
+                                className="px-3.5 py-1.5 text-xs text-[#6b7a7a] border-2 border-[#1b1c19] rounded-none bg-white font-semibold hover:bg-[#f5f3ee] transition-colors"
                               >
                                 Cancel
                               </button>
@@ -359,21 +360,16 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                       return (
                         <div
                           key={act.id}
-                          className="group relative bg-white p-4 rounded-none border-2 border-[#1b1c19] flex justify-between items-center shadow-[2px_2px_0px_0px_#1b1c19] transition-all duration-200"
+                          className="group relative bg-white p-4 sm:p-5 rounded-none border-2 border-[#1b1c19] flex justify-between items-center shadow-[2px_2px_0px_0px_#1b1c19] transition-all duration-200"
                         >
-                          <div className="flex flex-col gap-1 pr-3">
+                          <div className="flex flex-col gap-1.5 pr-3 min-w-0 flex-1">
                             {(() => {
                               const { startTime, endTime } = parseActivityTimeRange(act.time);
                               return (
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
-                                  <span className="px-2 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide">
-                                    {startTime}
-                                  </span>
-                                  <span className="text-xs font-black text-[#1b1c19]">-</span>
-                                  <span className="px-2 py-0.5 rounded-none bg-[#00ced1]/25 border border-[#00696b]/30 text-[#00696b] text-[11px] font-headline font-black uppercase tracking-wide">
-                                    {endTime}
-                                  </span>
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none bg-[#00ced1]/15 border border-[#00696b]/35 text-[#00696b] text-xs font-headline font-black tracking-wide w-fit">
+                                  <span>{startTime}</span>
+                                  <span className="text-[#1b1c19]/50 font-black">–</span>
+                                  <span>{endTime}</span>
                                 </div>
                               );
                             })()}
@@ -472,8 +468,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   {/* Duration */}
                   <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
                     <div className="flex items-center gap-2.5 shrink-0">
-                      <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
-                        <Clock className="w-4 h-4" />
+                      <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#a43c12] border border-[#1b1c19] shrink-0">
+                        <Hourglass className="w-4 h-4 text-[#a43c12]" />
                       </div>
                       <span className="text-xs font-semibold text-[#5f6e6e]">Duration</span>
                     </div>
@@ -484,7 +480,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
                     <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
-                        <CheckCircle className="w-4 h-4" />
+                        <Footprints className="w-4 h-4 text-[#00696b]" />
                       </div>
                       <span className="text-xs font-semibold text-[#5f6e6e]">Total Stops</span>
                     </div>
@@ -494,8 +490,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   {/* Active Hours */}
                   <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
                     <div className="flex items-center gap-2.5 shrink-0">
-                      <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
-                        <Clock className="w-4 h-4" />
+                      <div className="p-1.5 rounded-none bg-[#fe7e4f]/20 text-[#d9531e] border border-[#1b1c19] shrink-0">
+                        <Zap className="w-4 h-4 text-[#d9531e]" />
                       </div>
                       <span className="text-xs font-semibold text-[#5f6e6e]">Active Hours</span>
                     </div>
@@ -506,7 +502,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
                     <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
-                        <Map className="w-4 h-4" />
+                        <Compass className="w-4 h-4 text-[#00696b]" />
                       </div>
                       <span className="text-xs font-semibold text-[#5f6e6e]">Region</span>
                     </div>
