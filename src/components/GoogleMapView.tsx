@@ -234,8 +234,9 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
             <div style="margin-top: 10px;">
               <div style="font-size: 14.5px; font-weight: 900; color: ${popupText}; line-height: 1.25; font-family: 'Plus Jakarta Sans', sans-serif;">${act.title}</div>
               
-              ${act.location ? `<div style="font-size: 11px; color: ${popupSubtext}; margin-top: 4px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif;">
-                ${act.location}
+              ${act.location ? `<div style="font-size: 11px; color: ${popupSubtext}; margin-top: 4px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00696b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>${act.location}</span>
               </div>` : ''}
 
               <div style="display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; font-weight: 800; color: #a43c12; font-family: 'Plus Jakarta Sans', sans-serif;">
