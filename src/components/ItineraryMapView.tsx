@@ -303,43 +303,30 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                             {(() => {
                               const { startTime, endTime } = parseActivityTimeRange(act.time);
                               return (
-                                <div
-                                  className="inline-flex items-center gap-1.5 text-[11px] font-headline font-bold text-[#00696b] bg-[#00ced1]/15 px-2 py-0.5 border border-[#00696b]/30"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
+                                <div className="flex items-center gap-1 sm:gap-1.5" onClick={(e) => e.stopPropagation()}>
                                   <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
                                   <input
                                     type="time"
                                     value={timeStringToHHMM(startTime)}
-                                    onClick={(e) => {
-                                      try {
-                                        e.currentTarget.showPicker?.();
-                                      } catch {}
-                                    }}
                                     onChange={(e) => {
                                       if (e.target.value) {
                                         handleTimeChange(act.id, hhmmToTimeString(e.target.value), endTime);
                                       }
                                     }}
-                                    className="text-[11px] font-headline font-black text-[#00696b] bg-transparent border-0 p-0 text-center focus:outline-none cursor-pointer tracking-tight"
-                                    title="Click để chọn giờ bắt đầu"
+                                    className="text-[11px] font-headline font-black text-[#00696b] bg-[#00ced1]/15 border-2 border-[#1b1c19] px-1 py-0.5 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                    title="Chọn Giờ Bắt Đầu"
                                   />
-                                  <span className="text-[11px] font-bold text-[#00696b]/60 select-none">–</span>
+                                  <span className="text-xs font-black text-[#1b1c19]">-</span>
                                   <input
                                     type="time"
                                     value={timeStringToHHMM(endTime)}
-                                    onClick={(e) => {
-                                      try {
-                                        e.currentTarget.showPicker?.();
-                                      } catch {}
-                                    }}
                                     onChange={(e) => {
                                       if (e.target.value) {
                                         handleTimeChange(act.id, startTime, hhmmToTimeString(e.target.value));
                                       }
                                     }}
-                                    className="text-[11px] font-headline font-black text-[#00696b] bg-transparent border-0 p-0 text-center focus:outline-none cursor-pointer tracking-tight"
-                                    title="Click để chọn giờ kết thúc"
+                                    className="text-[11px] font-headline font-black text-[#00696b] bg-[#00ced1]/30 border-2 border-[#1b1c19] px-1 py-0.5 rounded-none text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00696b] shadow-[1px_1px_0px_0px_#1b1c19] cursor-pointer"
+                                    title="Chọn Giờ Kết Thúc"
                                   />
                                 </div>
                               );
