@@ -222,18 +222,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
           <h2 className="font-headline text-2xl sm:text-3xl font-extrabold text-[#1b1c19] text-center tracking-tight">
             Review Your Schedule
           </h2>
-          <p className="text-xs sm:text-sm text-[#5f6e6e] mt-1 text-center font-medium flex items-center justify-center gap-1.5 flex-wrap">
-            <span className="font-bold text-[#00696b] flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-[#00696b]" /> {itinerary.destination}
-            </span>
-            <span>•</span>
-            <span className="font-bold text-[#a43c12] bg-[#fe7e4f]/10 border border-[#a43c12]/30 px-2 py-0.5 rounded-none flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-[#a43c12]" /> {formattedDateRange}
-            </span>
-            <span>•</span>
-            <span>{itinerary.days.length} Days</span>
-            <span>•</span>
-            <span>{itinerary.totalStops} Stops</span>
+          <p className="text-xs sm:text-sm text-[#5f6e6e] mt-1 text-center font-medium max-w-md">
+            Review, fine-tune your activities, and seamlessly sync your itinerary to Google Calendar.
           </p>
 
           {/* Sync Notice Alert Banner */}
@@ -457,7 +447,21 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
+                  {/* Destination */}
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="p-1.5 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Destination</span>
+                    </div>
+                    <span className="text-xs font-extrabold text-[#1b1c19] truncate text-right flex-1 pl-2" title={toCommunityEnglishLabel(itinerary.destination) || itinerary.destination}>
+                      {toCommunityEnglishLabel(itinerary.destination) || itinerary.destination}
+                    </span>
+                  </div>
+
+                  {/* Travel Dates */}
                   <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <div className="p-1.5 rounded-none bg-[#a43c12]/15 text-[#a43c12] border border-[#1b1c19] shrink-0">
@@ -468,16 +472,29 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                     <span className="text-xs font-extrabold text-[#a43c12] truncate text-right flex-1 pl-2" title={formattedDateRange}>{formattedDateRange}</span>
                   </div>
 
+                  {/* Duration */}
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Duration</span>
+                    </div>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.days.length} Days</span>
+                  </div>
+
+                  {/* Total Stops */}
                   <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <div className="p-1.5 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
-                        <MapPin className="w-4 h-4" />
+                        <CheckCircle className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-semibold text-[#5f6e6e] truncate">Total Stops</span>
                     </div>
-                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.totalStops}</span>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.totalStops} Stops</span>
                   </div>
 
+                  {/* Active Hours */}
                   <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
@@ -488,6 +505,7 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                     <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.activeHours} Hrs</span>
                   </div>
 
+                  {/* Region */}
                   <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <div className="p-1.5 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19] shrink-0">

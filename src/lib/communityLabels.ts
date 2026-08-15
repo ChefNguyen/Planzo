@@ -26,6 +26,10 @@ const COMMUNITY_LABELS_EN: Record<string, string> = {
   'tay bac': 'Northwest Vietnam',
   'dong nam bo': 'Southeast Vietnam',
   'tay nam bo': 'Southwest Vietnam',
+  'mien tay nam bo': 'Southwest Vietnam',
+  'mien tay nam bo, vietnam': 'Southwest Vietnam',
+  'mien tay': 'Mekong Delta',
+  'mien tay, vietnam': 'Mekong Delta',
   'duyen hai mien trung': 'Central Coast Vietnam',
 
   // Destinations & Cities
