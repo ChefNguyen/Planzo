@@ -192,8 +192,8 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
-      <div className="bg-white rounded-none max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden relative border-2 border-[#1b1c19] shadow-[6px_6px_0px_0px_#00696b] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 md:p-8">
+      <div className="bg-white rounded-none w-full max-w-6xl xl:max-w-7xl max-h-[92vh] flex flex-col overflow-hidden relative border-2 border-[#1b1c19] shadow-[8px_8px_0px_0px_#00696b] animate-in zoom-in-95 duration-200">
         
         {/* Close Button */}
         <button
@@ -222,9 +222,6 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
           <h2 className="font-headline text-2xl sm:text-3xl font-extrabold text-[#1b1c19] text-center tracking-tight">
             Review Your Schedule
           </h2>
-          <p className="text-xs sm:text-sm text-[#5f6e6e] mt-1 text-center font-medium max-w-md">
-            Review, fine-tune your activities, and seamlessly sync your itinerary to Google Calendar.
-          </p>
 
           {/* Sync Notice Alert Banner */}
           {syncNotice && (
@@ -245,10 +242,10 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-10 py-6 scrollbar-thin">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             
             {/* Left Column: Days Timeline */}
-            <div className="lg:col-span-8 space-y-7">
+            <div className="lg:col-span-7 xl:col-span-8 space-y-7">
               {itinerary.days.map((day, dayIdx) => {
                 const dayDate = new Date(baseStartDate);
                 dayDate.setDate(dayDate.getDate() + (day.dayNumber - 1));
@@ -436,10 +433,10 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
             </div>
 
             {/* Right Column: Trip Summary Card Widget */}
-            <div className="lg:col-span-4 lg:sticky lg:top-0">
-              <div className="bg-white p-5 sm:p-6 rounded-none border-2 border-[#1b1c19] shadow-[4px_4px_0px_0px_#00696b] space-y-4 max-h-[calc(80vh-100px)] overflow-y-auto custom-scrollbar">
+            <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-0">
+              <div className="bg-white p-5 sm:p-6 rounded-none border-2 border-[#1b1c19] shadow-[5px_5px_0px_0px_#00696b] space-y-4.5 max-h-[calc(85vh-100px)] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between border-b-2 border-[#1b1c19]/20 pb-3 shrink-0">
-                  <h5 className="font-headline font-black text-[#1b1c19] text-xs uppercase tracking-wider flex items-center gap-2">
+                  <h5 className="font-headline font-black text-[#1b1c19] text-sm uppercase tracking-wider flex items-center gap-2">
                     <Map className="w-4 h-4 text-[#00696b]" /> Trip Summary
                   </h5>
                   <span className="px-2.5 py-0.5 rounded-none bg-[#00696b]/10 text-[#00696b] text-[10px] font-headline font-black uppercase border border-[#00696b]/30">
@@ -447,85 +444,85 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
                   </span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {/* Destination */}
-                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
                         <MapPin className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Destination</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Destination</span>
                     </div>
-                    <span className="text-xs font-extrabold text-[#1b1c19] truncate text-right flex-1 pl-2" title={toCommunityEnglishLabel(itinerary.destination) || itinerary.destination}>
+                    <span className="text-xs font-extrabold text-[#1b1c19] text-right break-words font-headline" title={toCommunityEnglishLabel(itinerary.destination) || itinerary.destination}>
                       {toCommunityEnglishLabel(itinerary.destination) || itinerary.destination}
                     </span>
                   </div>
 
                   {/* Travel Dates */}
-                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#a43c12]/15 text-[#a43c12] border border-[#1b1c19] shrink-0">
                         <Calendar className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Travel Dates</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Travel Dates</span>
                     </div>
-                    <span className="text-xs font-extrabold text-[#a43c12] truncate text-right flex-1 pl-2" title={formattedDateRange}>{formattedDateRange}</span>
+                    <span className="text-xs font-extrabold text-[#a43c12] text-right break-words font-headline" title={formattedDateRange}>{formattedDateRange}</span>
                   </div>
 
                   {/* Duration */}
-                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
                         <Clock className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Duration</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Duration</span>
                     </div>
-                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.days.length} Days</span>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0 font-headline">{itinerary.days.length} Days</span>
                   </div>
 
                   {/* Total Stops */}
-                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#00ced1]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
                         <CheckCircle className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Total Stops</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Total Stops</span>
                     </div>
-                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.totalStops} Stops</span>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0 font-headline">{itinerary.totalStops} Stops</span>
                   </div>
 
                   {/* Active Hours */}
-                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#fe7e4f]/15 text-[#d9531e] border border-[#1b1c19] shrink-0">
                         <Clock className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Active Hours</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Active Hours</span>
                     </div>
-                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0">{itinerary.activeHours} Hrs</span>
+                    <span className="text-sm font-extrabold text-[#1b1c19] shrink-0 font-headline">{itinerary.activeHours} Hrs</span>
                   </div>
 
                   {/* Region */}
-                  <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19]">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center justify-between p-3 rounded-none bg-[#f5f3ee] border-2 border-[#1b1c19] gap-3">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       <div className="p-1.5 rounded-none bg-[#00696b]/15 text-[#00696b] border border-[#1b1c19] shrink-0">
                         <Map className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-semibold text-[#5f6e6e] truncate">Region</span>
+                      <span className="text-xs font-semibold text-[#5f6e6e]">Region</span>
                     </div>
-                    <span className="text-xs font-extrabold text-[#1b1c19] truncate text-right flex-1 pl-2" title={toCommunityEnglishLabel(itinerary.region)}>{toCommunityEnglishLabel(itinerary.region)}</span>
+                    <span className="text-xs font-extrabold text-[#1b1c19] text-right break-words font-headline" title={toCommunityEnglishLabel(itinerary.region)}>{toCommunityEnglishLabel(itinerary.region)}</span>
                   </div>
                 </div>
 
                 {/* Vibes Section */}
                 {itinerary.vibes && itinerary.vibes.length > 0 && (
-                  <div className="pt-3 border-t-2 border-[#1b1c19]/20">
-                    <p className="text-xs font-bold text-[#5f6e6e] mb-2">Vibes Included ({itinerary.vibes.length}):</p>
-                    <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="pt-3.5 border-t-2 border-[#1b1c19]/20">
+                    <p className="text-xs font-bold text-[#5f6e6e] mb-2.5">Vibes Included ({itinerary.vibes.length}):</p>
+                    <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                       {itinerary.vibes.map((v, i) => (
                         <span
                           key={i}
-                          className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-2.5 py-0.5 rounded-none font-bold border border-[#1b1c19] break-words"
+                          className="text-[11px] bg-[#00ced1]/20 text-[#005354] px-2.5 py-1 rounded-none font-bold border border-[#1b1c19] break-words"
                         >
                           {toCommunityEnglishLabel(v)}
                         </span>
@@ -541,10 +538,10 @@ export const ScheduleReviewModal: React.FC<ScheduleReviewModalProps> = ({
 
         {/* Floating Glass Footer Actions */}
         <div className="px-6 sm:px-10 py-4.5 border-t-2 border-[#1b1c19] bg-white">
-          <div className="flex flex-col items-center gap-3 max-w-2xl mx-auto">
+          <div className="flex flex-col items-center gap-3 max-w-3xl mx-auto">
             
             {/* 3 Main Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
               {/* Button 1: ICS Export */}
               <button
                 onClick={handleIcsExport}
