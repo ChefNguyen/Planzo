@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Itinerary, Activity } from '../types';
-import { MapPin, ArrowLeft, GripVertical, Clock } from 'lucide-react';
+import { MapPin, ArrowLeft, GripVertical } from 'lucide-react';
 import { GoogleMapView } from './GoogleMapView';
 import { getPlacePhoto } from '../lib/photoUtils';
 import { parseActivityTimeRange, formatActivityTimeRange, timeStringToHHMM, hhmmToTimeString } from '../lib/timeUtils';
@@ -304,7 +304,6 @@ export const ItineraryMapView: React.FC<ItineraryMapViewProps> = ({
                               const { startTime, endTime } = parseActivityTimeRange(act.time);
                               return (
                                 <div className="flex items-center gap-1 sm:gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                  <Clock className="w-3.5 h-3.5 text-[#00696b] shrink-0" />
                                   <input
                                     type="time"
                                     value={timeStringToHHMM(startTime)}
